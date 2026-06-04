@@ -23,8 +23,9 @@ else
 fi
 
 export PYENV_ROOT="$HOME/.pyenv"
-export PATH="$PYENV_ROOT/bin:$PATH"
+export PATH="$PYENV_ROOT/bin:$HOME/.local/bin:$PATH"
 eval "$(pyenv init -)"
+eval "$(pyenv init --path 2>/dev/null)" || true
 
 # ── Python ──────────────────────────────────────────────────────────
 if pyenv versions 2>/dev/null | grep -q "$PYTHON_VERSION"; then
@@ -36,12 +37,15 @@ fi
 
 pyenv global "$PYTHON_VERSION"
 
+# Garante que o python do pyenv está no PATH antes do Poetry
+PYENV_PYTHON="$PYENV_ROOT/versions/$PYTHON_VERSION/bin/python3"
+
 # ── Poetry ──────────────────────────────────────────────────────────
-if command -v poetry &>/dev/null; then
-  skipped "Poetry ($(poetry --version))"
+if command -v poetry &>/dev/null || [[ -f "$HOME/.local/bin/poetry" ]]; then
+  skipped "Poetry ($( (poetry --version 2>/dev/null || "$HOME/.local/bin/poetry" --version 2>/dev/null) | head -1))"
 else
   log "Instalando Poetry..."
-  curl -sSL https://install.python-poetry.org | python3 -
+  curl -sSL https://install.python-poetry.org | "$PYENV_PYTHON" -
 fi
 
 ok "Python $(python3 --version) pronto!"
