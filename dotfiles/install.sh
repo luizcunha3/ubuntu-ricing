@@ -18,6 +18,14 @@ link() {
   ok "  $dst"
 }
 
+# Zsh — instala primeiro, antes de qualquer coisa
+if ! command -v zsh &>/dev/null; then
+  log "Instalando zsh..."
+  sudo apt-get install -y zsh
+else
+  ok "zsh já instalado ($(zsh --version))"
+fi
+
 log "Criando links simbólicos..."
 link "$DOTFILES/.zshrc"                          "$HOME/.zshrc"
 link "$DOTFILES/config/kitty/kitty.conf"         "$HOME/.config/kitty/kitty.conf"
@@ -97,7 +105,6 @@ fi
 # Mudar shell padrão para zsh
 if [[ "$SHELL" != "$(command -v zsh)" ]]; then
   log "Mudando shell padrão para zsh..."
-  sudo apt-get install -y zsh
   chsh -s "$(command -v zsh)"
 fi
 
