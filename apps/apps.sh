@@ -118,9 +118,23 @@ else
   skipped "qBittorrent"
 fi
 
+# ── Claude Code ──────────────────────────────────────────────────────
+if command -v claude &>/dev/null; then
+  skipped "Claude Code ($(claude --version 2>/dev/null | head -1))"
+elif confirm "Instalar Claude Code?"; then
+  log "Instalando Claude Code..."
+  # Garante que o npm do nvm está disponível
+  export NVM_DIR="$HOME/.nvm"
+  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+  npm install -g @anthropic-ai/claude-code && ok "Claude Code instalado!" || warn "Falhou ao instalar Claude Code"
+else
+  skipped "Claude Code"
+fi
+
 echo ""
 log "Resumo de apps:"
 command -v discord     &>/dev/null && echo "  ✓ Discord"     || flatpak list 2>/dev/null | grep -q "Discord"     && echo "  ✓ Discord (Flatpak)"     || echo "  - Discord"
 command -v steam       &>/dev/null && echo "  ✓ Steam"       || flatpak list 2>/dev/null | grep -q "Steam"       && echo "  ✓ Steam (Flatpak)"       || echo "  - Steam"
 command -v zen-browser &>/dev/null && echo "  ✓ Zen Browser" || flatpak list 2>/dev/null | grep -q "zen"         && echo "  ✓ Zen Browser (Flatpak)" || echo "  - Zen Browser"
 command -v qbittorrent &>/dev/null && echo "  ✓ qBittorrent" || flatpak list 2>/dev/null | grep -q "qbittorrent" && echo "  ✓ qBittorrent (Flatpak)" || echo "  - qBittorrent"
+command -v claude      &>/dev/null && echo "  ✓ Claude Code ($(claude --version 2>/dev/null | head -1))" || echo "  - Claude Code"

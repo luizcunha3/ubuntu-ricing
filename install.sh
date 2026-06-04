@@ -65,7 +65,7 @@ if [[ -z "$ONLY" ]]; then
   echo "  • Terminal: Kitty, Zsh, Oh My Zsh, Starship"
   echo "  • CLI: eza, bat, fd, fzf, zoxide, btop, ripgrep"
   echo "  • GNOME: Kanagawa GTK, Papirus icons, extensões"
-  echo "  • Apps: Discord, Steam, Zen Browser, qBittorrent"
+  echo "  • Apps: Discord, Steam, Zen Browser, qBittorrent, Claude Code"
   echo "  • Wallpapers: Great Wave, Mountains Retreat, Abstract 00252"
   echo ""
   confirm "Continuar com a instalação completa?" || { log "Instalação cancelada."; exit 0; }
