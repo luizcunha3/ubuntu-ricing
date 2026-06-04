@@ -22,18 +22,16 @@ else
 fi
 
 # ── Kanagawa GTK theme ───────────────────────────────────────────────
-if ls "$THEMES_DIR"/Kanagawa* &>/dev/null 2>&1; then
+# Usa ArcaEge/GTK-Kanagawa-Improved — pré-compilado, sem necessidade de sassc
+if [[ -f "$THEMES_DIR/Kanagawa/index.theme" ]]; then
   skipped "Kanagawa GTK theme"
 else
-  log "Instalando Kanagawa GTK theme..."
+  log "Instalando Kanagawa GTK theme (pré-compilado)..."
   TMP=$(mktemp -d)
-  if git clone --depth=1 "https://github.com/Fausto-Korpsvart/Kanagawa-GKT-Theme.git" "$TMP/kanagawa" 2>/dev/null; then
-    if [[ -d "$TMP/kanagawa/themes" ]]; then
-      cp -r "$TMP/kanagawa/themes/"* "$THEMES_DIR/"
-      ok "Kanagawa GTK instalado em $THEMES_DIR"
-    else
-      warn "Estrutura do repositório mudou — instale manualmente"
-    fi
+  if git clone --depth=1 "https://github.com/ArcaEge/GTK-Kanagawa-Improved.git" "$TMP/kanagawa" 2>/dev/null; then
+    mkdir -p "$THEMES_DIR/Kanagawa"
+    cp -r "$TMP/kanagawa/"* "$THEMES_DIR/Kanagawa/"
+    ok "Kanagawa GTK instalado em $THEMES_DIR/Kanagawa"
   else
     warn "Não foi possível clonar o tema Kanagawa"
   fi

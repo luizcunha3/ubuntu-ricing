@@ -8,10 +8,10 @@ g() { gsettings set "$@" 2>/dev/null || true; }
 
 log "Aplicando tema escuro..."
 g org.gnome.desktop.interface color-scheme      'prefer-dark'
-g org.gnome.desktop.interface gtk-theme         'Kanagawa-BL'
+g org.gnome.desktop.interface gtk-theme         'Kanagawa'
 g org.gnome.desktop.interface icon-theme        'Papirus-Dark'
 g org.gnome.desktop.interface cursor-theme      'Bibata-Modern-Ice'
-g org.gnome.desktop.wm.preferences theme        'Kanagawa-BL'
+g org.gnome.desktop.wm.preferences theme        'Kanagawa'
 
 log "Aplicando fontes..."
 g org.gnome.desktop.interface font-name              'Inter 11'
