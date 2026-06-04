@@ -12,7 +12,7 @@ skipped() { echo -e "\033[0;90m[--]\033[0m $1 já instalado — pulando."; }
 # ── rustup ──────────────────────────────────────────────────────────
 if command -v rustup &>/dev/null; then
   skipped "rustup ($(rustup --version 2>/dev/null | head -1))"
-  rustup update --quiet
+  rustup update 2>&1 | grep -v "^info:" || true
 else
   log "Instalando Rust via rustup..."
   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path

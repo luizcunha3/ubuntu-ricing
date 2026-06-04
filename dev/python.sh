@@ -7,17 +7,15 @@ skipped() { echo -e "\033[0;90m[--]\033[0m $1 já instalado — pulando."; }
 
 PYTHON_VERSION="3.12.4"
 
-# ── Dependências de build ────────────────────────────────────────────
-log "Verificando dependências de build..."
-sudo apt-get install -y \
-  make build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev \
-  libsqlite3-dev wget curl llvm libncursesw5-dev xz-utils tk-dev \
-  libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev 2>/dev/null
-
 # ── pyenv ───────────────────────────────────────────────────────────
 if [[ -d "$HOME/.pyenv" ]]; then
   skipped "pyenv"
 else
+  log "Instalando dependências de build do pyenv..."
+  sudo apt-get install -y -qq \
+    make build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev \
+    libsqlite3-dev wget curl llvm libncursesw5-dev xz-utils tk-dev \
+    libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev 2>/dev/null
   log "Instalando pyenv..."
   curl https://pyenv.run | bash
 fi
