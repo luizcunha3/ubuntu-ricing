@@ -27,24 +27,14 @@ cat << 'EOF'
 EOF
 echo -e "${NC}"
 
-# --only <module> e --yes para pular confirmações
+# --only <module> para rodar só um módulo
 ONLY=""
-YES=false
 while [[ $# -gt 0 ]]; do
   case $1 in
     --only) ONLY="$2"; shift 2 ;;
-    --yes|-y) YES=true; shift ;;
     *) err "Flag desconhecida: $1" ;;
   esac
 done
-
-confirm() {
-  local msg="$1"
-  if [[ "$YES" == true ]]; then return 0; fi
-  echo -e "${YELLOW}?${NC} $msg [s/N] \c"
-  read -r answer </dev/tty
-  [[ "$answer" =~ ^[sSyY]$ ]]
-}
 
 run_module() {
   local name="$1"
@@ -56,20 +46,6 @@ run_module() {
     ok "$name concluído"
   fi
 }
-
-# Confirmação geral quando roda tudo (sem --only)
-if [[ -z "$ONLY" ]]; then
-  echo -e "${CYAN}O seguinte será instalado:${NC}"
-  echo "  • Fontes: JetBrains Mono Nerd Font, Inter"
-  echo "  • Dev: Node/nvm, Python/pyenv, Rust/rustup"
-  echo "  • Terminal: Kitty, Zsh, Oh My Zsh, Starship"
-  echo "  • CLI: eza, bat, fd, fzf, zoxide, btop, ripgrep"
-  echo "  • GNOME: Kanagawa GTK, Papirus icons, extensões"
-  echo "  • Apps: Discord, Steam, Zen Browser, qBittorrent, Claude Code"
-  echo "  • Wallpapers: Great Wave, Mountains Retreat, Abstract 00252"
-  echo ""
-  confirm "Continuar com a instalação completa?" || { log "Instalação cancelada."; exit 0; }
-fi
 
 run_module "fonts"             "fonts/fonts.sh"
 run_module "dev/node"          "dev/node.sh"
