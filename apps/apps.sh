@@ -103,8 +103,24 @@ else
   skipped "Zen Browser"
 fi
 
+# ── qBittorrent ──────────────────────────────────────────────────────
+if command -v qbittorrent &>/dev/null || flatpak list 2>/dev/null | grep -q "org.qbittorrent.qBittorrent"; then
+  skipped "qBittorrent"
+elif confirm "Instalar qBittorrent?"; then
+  log "Instalando qBittorrent..."
+  if sudo apt-get install -y qbittorrent 2>/dev/null; then
+    ok "qBittorrent instalado!"
+  else
+    log "apt falhou — tentando via Flatpak..."
+    flatpak install -y flathub org.qbittorrent.qBittorrent && ok "qBittorrent instalado (Flatpak)" || warn "Falhou ao instalar qBittorrent"
+  fi
+else
+  skipped "qBittorrent"
+fi
+
 echo ""
 log "Resumo de apps:"
-command -v discord    &>/dev/null && echo "  ✓ Discord"    || flatpak list 2>/dev/null | grep -q "Discord" && echo "  ✓ Discord (Flatpak)" || echo "  - Discord"
-command -v steam      &>/dev/null && echo "  ✓ Steam"      || flatpak list 2>/dev/null | grep -q "Steam"   && echo "  ✓ Steam (Flatpak)"   || echo "  - Steam"
-command -v zen-browser &>/dev/null && echo "  ✓ Zen Browser" || flatpak list 2>/dev/null | grep -q "zen"  && echo "  ✓ Zen Browser (Flatpak)" || echo "  - Zen Browser"
+command -v discord     &>/dev/null && echo "  ✓ Discord"     || flatpak list 2>/dev/null | grep -q "Discord"     && echo "  ✓ Discord (Flatpak)"     || echo "  - Discord"
+command -v steam       &>/dev/null && echo "  ✓ Steam"       || flatpak list 2>/dev/null | grep -q "Steam"       && echo "  ✓ Steam (Flatpak)"       || echo "  - Steam"
+command -v zen-browser &>/dev/null && echo "  ✓ Zen Browser" || flatpak list 2>/dev/null | grep -q "zen"         && echo "  ✓ Zen Browser (Flatpak)" || echo "  - Zen Browser"
+command -v qbittorrent &>/dev/null && echo "  ✓ qBittorrent" || flatpak list 2>/dev/null | grep -q "qbittorrent" && echo "  ✓ qBittorrent (Flatpak)" || echo "  - qBittorrent"
