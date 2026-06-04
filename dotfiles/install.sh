@@ -122,11 +122,14 @@ else
 fi
 
 # ── Shell padrão → zsh ──────────────────────────────────────────────
-if [[ "$SHELL" == "$(command -v zsh)" ]]; then
-  skipped "shell padrão (já é zsh)"
+# Usa getent para checar o shell real do usuário, não a var $SHELL do processo
+REAL_SHELL=$(getent passwd "$USER" | cut -d: -f7)
+ZSH_PATH=$(command -v zsh)
+if [[ "$REAL_SHELL" == "$ZSH_PATH" ]]; then
+  skipped "shell padrão (já é zsh: $ZSH_PATH)"
 else
   log "Mudando shell padrão para zsh..."
-  chsh -s "$(command -v zsh)"
+  chsh -s "$ZSH_PATH"
 fi
 
 ok "Dotfiles concluído!"
