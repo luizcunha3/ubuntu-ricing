@@ -40,48 +40,16 @@ else
   }
 fi
 
-# ── Zen Browser (AppImage — Flatpak ainda instável no Flathub) ────────
-ZEN_DIR="$HOME/.local/opt/zen-browser"
-if [[ -f "$ZEN_DIR/zen.AppImage" ]] || command -v zen-browser &>/dev/null; then
-  skipped "Zen Browser"
+# ── Google Chrome ─────────────────────────────────────────────────────
+if command -v google-chrome &>/dev/null || command -v google-chrome-stable &>/dev/null; then
+  skipped "Google Chrome"
 else
-  log "Instalando Zen Browser via AppImage..."
-  mkdir -p "$ZEN_DIR" "$HOME/.local/bin" "$HOME/.local/share/applications"
-
-  ZEN_URL=$(curl -fsSL --max-time 10 \
-    "https://api.github.com/repos/zen-browser/desktop/releases/latest" \
-    | grep -o '"browser_download_url": "[^"]*x86_64\.AppImage"' \
-    | head -1 | cut -d'"' -f4)
-
-  if [[ -z "$ZEN_URL" ]]; then
-    warn "Não foi possível obter URL do Zen Browser — acesse: https://zen-browser.app/download"
-  else
-    log "Baixando $(basename "$ZEN_URL")..."
-    curl -fsSL --progress-bar "$ZEN_URL" -o "$ZEN_DIR/zen.AppImage"
-    chmod +x "$ZEN_DIR/zen.AppImage"
-    ln -sf "$ZEN_DIR/zen.AppImage" "$HOME/.local/bin/zen-browser"
-
-    # Tenta extrair ícone do AppImage
-    "$ZEN_DIR/zen.AppImage" --appimage-extract usr/share/icons &>/dev/null || true
-    if [[ -d squashfs-root/usr/share/icons ]]; then
-      cp -r squashfs-root/usr/share/icons ~/.local/share/ 2>/dev/null || true
-      rm -rf squashfs-root
-    fi
-
-    cat > "$HOME/.local/share/applications/zen-browser.desktop" << 'DESKTOP'
-[Desktop Entry]
-Name=Zen Browser
-Comment=Experience tranquillity while browsing the web
-Exec=zen-browser %U
-Terminal=false
-Type=Application
-Icon=zen-browser
-Categories=Network;WebBrowser;
-MimeType=text/html;text/xml;application/xhtml+xml;application/xml;application/vnd.mozilla.xul+xml;application/rss+xml;application/rdf+xml;image/gif;image/jpeg;image/png;x-scheme-handler/http;x-scheme-handler/https;x-scheme-handler/ftp;
-StartupNotify=true
-DESKTOP
-    ok "Zen Browser instalado!"
-  fi
+  log "Instalando Google Chrome..."
+  curl -fsSL https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -o /tmp/chrome.deb \
+    && sudo apt-get install -y /tmp/chrome.deb \
+    && rm -f /tmp/chrome.deb \
+    && ok "Google Chrome instalado!" \
+    || warn "Falhou ao instalar Google Chrome"
 fi
 
 # ── qBittorrent ───────────────────────────────────────────────────────
@@ -93,6 +61,15 @@ else
     warn "apt falhou — tentando via Flatpak..."
     flatpak install -y flathub org.qbittorrent.qBittorrent && ok "qBittorrent instalado (Flatpak)!" || warn "Falhou ao instalar qBittorrent"
   }
+fi
+
+# ── Kitty ─────────────────────────────────────────────────────────────
+if command -v kitty &>/dev/null; then
+  skipped "Kitty"
+else
+  log "Instalando Kitty..."
+  curl -fsSL https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin launch=n \
+    && ok "Kitty instalado!" || warn "Falhou ao instalar Kitty"
 fi
 
 # ── Claude Code ───────────────────────────────────────────────────────
@@ -108,7 +85,8 @@ fi
 echo ""
 log "Resumo de apps:"
 command -v discord     &>/dev/null && echo "  ✓ Discord"     || flatpak list 2>/dev/null | grep -q "Discord"      && echo "  ✓ Discord (Flatpak)"     || echo "  - Discord"
-command -v steam       &>/dev/null && echo "  ✓ Steam"       || flatpak list 2>/dev/null | grep -q "Steam"        && echo "  ✓ Steam (Flatpak)"       || echo "  - Steam"
-command -v zen-browser &>/dev/null && echo "  ✓ Zen Browser" || flatpak list 2>/dev/null | grep -q "zen_browser"  && echo "  ✓ Zen Browser (Flatpak)" || echo "  - Zen Browser"
+command -v steam         &>/dev/null && echo "  ✓ Steam"          || flatpak list 2>/dev/null | grep -q "Steam" && echo "  ✓ Steam (Flatpak)" || echo "  - Steam"
+{ command -v google-chrome &>/dev/null || command -v google-chrome-stable &>/dev/null; } && echo "  ✓ Google Chrome" || echo "  - Google Chrome"
 command -v qbittorrent &>/dev/null && echo "  ✓ qBittorrent" || flatpak list 2>/dev/null | grep -q "qbittorrent"  && echo "  ✓ qBittorrent (Flatpak)" || echo "  - qBittorrent"
+command -v kitty       &>/dev/null && echo "  ✓ Kitty"       || echo "  - Kitty"
 command -v claude      &>/dev/null && echo "  ✓ Claude Code ($(claude --version 2>/dev/null | head -1))" || echo "  - Claude Code"

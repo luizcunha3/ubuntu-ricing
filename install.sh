@@ -15,12 +15,18 @@ err()  { echo -e "${RED}[ err]${NC} $*"; exit 1; }
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Pré-requisitos mínimos — curl pode não vir em VMs limpas
-if ! command -v curl &>/dev/null; then
-  echo -e "${YELLOW}[warn]${NC} curl não encontrado — instalando pré-requisitos..."
+# Pré-requisitos mínimos — podem não vir em VMs/Ubuntu limpas
+_need_pkgs=()
+command -v curl  &>/dev/null || _need_pkgs+=(curl)
+command -v git   &>/dev/null || _need_pkgs+=(git)
+command -v unzip &>/dev/null || _need_pkgs+=(unzip)
+dpkg -s software-properties-common &>/dev/null 2>&1 || _need_pkgs+=(software-properties-common)
+if [[ ${#_need_pkgs[@]} -gt 0 ]]; then
+  echo -e "${YELLOW}[warn]${NC} Instalando pré-requisitos: ${_need_pkgs[*]}"
   sudo apt-get update -qq
-  sudo apt-get install -y curl git
+  sudo apt-get install -y "${_need_pkgs[@]}"
 fi
+unset _need_pkgs
 
 echo -e "${PURPLE}"
 cat << 'EOF'

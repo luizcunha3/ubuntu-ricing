@@ -15,10 +15,9 @@ if dpkg -l papirus-icon-theme &>/dev/null 2>&1; then
   skipped "Papirus icon theme"
 else
   log "Instalando Papirus icon theme..."
-  sudo add-apt-repository -y ppa:papirus/papirus 2>/dev/null
+  sudo add-apt-repository -y ppa:papirus/papirus 2>/dev/null || true
   sudo apt-get update -qq
-  sudo apt-get install -y papirus-icon-theme
-  ok "Papirus instalado!"
+  sudo apt-get install -y papirus-icon-theme && ok "Papirus instalado!" || warn "Falhou ao instalar Papirus"
 fi
 
 # ── Nordic GTK theme ─────────────────────────────────────────────────

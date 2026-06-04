@@ -3,6 +3,7 @@ set -euo pipefail
 
 log()  { echo -e "\033[0;36m[gnome]\033[0m $*"; }
 ok()   { echo -e "\033[0;32m[ ok]\033[0m $*"; }
+warn() { echo -e "\033[1;33m[warn]\033[0m $*"; }
 
 g() { gsettings set "$@" 2>/dev/null || true; }
 
@@ -52,5 +53,29 @@ log "Configurando Blur my Shell..."
 g org.gnome.shell.extensions.blur-my-shell.panel blur   true
 g org.gnome.shell.extensions.blur-my-shell.overview blur true
 g org.gnome.shell.extensions.blur-my-shell sigma        15
+
+log "Configurando browser padrão..."
+if command -v google-chrome &>/dev/null || command -v google-chrome-stable &>/dev/null; then
+  xdg-settings set default-web-browser google-chrome.desktop 2>/dev/null \
+    || xdg-settings set default-web-browser google-chrome-stable.desktop 2>/dev/null \
+    || true
+  ok "Google Chrome definido como browser padrão!"
+else
+  warn "Google Chrome não encontrado — browser padrão não alterado."
+fi
+
+log "Configurando terminal padrão..."
+if command -v kitty &>/dev/null; then
+  # Registra kitty no update-alternatives
+  KITTY_BIN="$(command -v kitty)"
+  sudo update-alternatives --install /usr/bin/x-terminal-emulator x-terminal-emulator "$KITTY_BIN" 50 2>/dev/null || true
+  sudo update-alternatives --set x-terminal-emulator "$KITTY_BIN" 2>/dev/null || true
+  # GNOME usa essa chave para o atalho Super+T e "Abrir terminal"
+  g org.gnome.desktop.default-applications.terminal exec       'kitty'
+  g org.gnome.desktop.default-applications.terminal exec-arg   ''
+  ok "Kitty definido como terminal padrão!"
+else
+  warn "Kitty não encontrado — terminal padrão não alterado."
+fi
 
 ok "Configurações GNOME aplicadas!"

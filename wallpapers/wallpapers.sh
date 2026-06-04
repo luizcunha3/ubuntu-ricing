@@ -21,13 +21,13 @@ download() {
   local name="$1" url="$2"
   local dest="$WP_DIR/$name"
   if [[ -f "$dest" ]]; then
-    ok "Já existe: $name"
+    ok "Já existe: $name" >&2
   else
-    log "Baixando $name..."
+    log "Baixando $name..." >&2
     if curl -fsSL "$url" -o "$dest" 2>/dev/null; then
-      ok "Baixado: $name"
+      ok "Baixado: $name" >&2
     else
-      warn "Falhou: $name (url pode ter mudado)"
+      warn "Falhou: $name (url pode ter mudado)" >&2
       rm -f "$dest"
     fi
   fi
@@ -38,14 +38,14 @@ BASE_G="https://raw.githubusercontent.com/Gurjaka/Kanagawa-Wallpapers/main/wallp
 BASE_P="https://raw.githubusercontent.com/philikarus/Kanagawa-wallpapers/main/wallpapers/landscape"
 
 WP1=$(download "great-wave.jpg"        "$BASE_G/great_wave_of_kanagawa.jpg")
-WP2=$(download "mountains-retreat.jpg" "$BASE_G/mountains-retreat.jpg")
-     download  "abstract-00252.png"    "$BASE_P/00252.png" > /dev/null
+     download  "mountains-retreat.jpg" "$BASE_G/mountains-retreat.jpg" > /dev/null
+WP2=$(download "abstract-00252.png"    "$BASE_P/00252.png")
 
-# Aplica o Great Wave como wallpaper padrão
-if [[ -f "$WP1" ]]; then
-  set_wallpaper "$WP1"
-elif [[ -f "$WP2" ]]; then
+# Aplica Abstract como wallpaper padrão
+if [[ -f "$WP2" ]]; then
   set_wallpaper "$WP2"
+elif [[ -f "$WP1" ]]; then
+  set_wallpaper "$WP1"
 else
   warn "Nenhum wallpaper baixado — verifique conexão"
 fi
