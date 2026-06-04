@@ -1,0 +1,63 @@
+"$schema" = 'https://starship.rs/config-schema.json'
+
+# Kanagawa Wave prompt
+format = """
+[╭─](fg:#727169)$os$directory$git_branch$git_status$nodejs$python$rust$cmd_duration
+[╰─](fg:#727169)$character"""
+
+add_newline = true
+
+[os]
+disabled = false
+style    = "bold fg:#7E9CD8"
+
+[os.symbols]
+Ubuntu = "  "
+Linux  = "  "
+
+[directory]
+style            = "bold fg:#7AA89F"
+read_only        = " 󰌾"
+truncation_length = 4
+truncate_to_repo  = true
+format           = "[$path]($style)[$read_only](fg:#E46876) "
+
+[git_branch]
+symbol = " "
+style  = "fg:#957FB8"
+format = "on [$symbol$branch]($style) "
+
+[git_status]
+style  = "fg:#E46876"
+format = '([$all_status$ahead_behind]($style) )'
+ahead  = "⇡${count}"
+behind = "⇣${count}"
+staged = "[+${count}](fg:#98BB6C)"
+modified = "[~${count}](fg:#DCA561)"
+untracked = "[?${count}](fg:#727169)"
+
+[nodejs]
+symbol = " "
+style  = "fg:#98BB6C"
+format = "[$symbol($version)]($style) "
+
+[python]
+symbol            = " "
+style             = "fg:#DCA561"
+format            = "[$symbol($version)]($style) "
+pyenv_version_name = true
+
+[rust]
+symbol = " "
+style  = "fg:#C34043"
+format = "[$symbol($version)]($style) "
+
+[cmd_duration]
+min_time = 2_000
+style    = "fg:#727169"
+format   = "took [$duration]($style) "
+
+[character]
+success_symbol = "[❯](bold fg:#7E9CD8)"
+error_symbol   = "[❯](bold fg:#E46876)"
+vimcmd_symbol  = "[❮](bold fg:#957FB8)"

@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ubuntu Ricing Explorer</title>
+  <style>
+    :root {
+      --bg: #1a1a2e;
+      --surface: #16213e;
+      --surface2: #0f3460;
+      --accent: #e94560;
+      --text: #eaeaea;
+      --muted: #888;
+      --radius: 12px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* NAV */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(22,33,62,0.9);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      padding: 0 2rem;
+      display: flex; align-items: center; gap: 2rem; height: 56px;
+    }
+    nav .logo { font-weight: 700; font-size: 1.1rem; color: var(--accent); }
+    nav a {
+      color: var(--muted); text-decoration: none; font-size: 0.9rem;
+      transition: color .2s;
+    }
+    nav a:hover, nav a.active { color: var(--text); }
+
+    /* HERO */
+    .hero {
+      text-align: center; padding: 5rem 2rem 3rem;
+      background: radial-gradient(ellipse at 50% 0%, rgba(233,69,96,0.15) 0%, transparent 70%);
+    }
+    .hero h1 { font-size: 2.8rem; font-weight: 800; margin-bottom: .5rem; }
+    .hero h1 span { color: var(--accent); }
+    .hero p { color: var(--muted); font-size: 1.1rem; max-width: 560px; margin: 0 auto; }
+
+    /* SECTIONS */
+    section { padding: 4rem 2rem; max-width: 1100px; margin: 0 auto; }
+    section h2 {
+      font-size: 1.5rem; font-weight: 700; margin-bottom: .5rem;
+      display: flex; align-items: center; gap: .6rem;
+    }
+    section h2 .icon { font-size: 1.3rem; }
+    .section-sub { color: var(--muted); margin-bottom: 2rem; font-size: 0.95rem; }
+
+    /* PALETTE CARDS */
+    .palette-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.2rem;
+    }
+    .palette-card {
+      border: 2px solid transparent;
+      border-radius: var(--radius);
+      overflow: hidden;
+      cursor: pointer;
+      transition: border-color .2s, transform .15s;
+      background: var(--surface);
+    }
+    .palette-card:hover { transform: translateY(-3px); border-color: rgba(255,255,255,0.2); }
+    .palette-card.selected { border-color: var(--accent); }
+    .palette-swatches {
+      display: flex; height: 70px;
+    }
+    .palette-swatches span { flex: 1; }
+    .palette-info { padding: 1rem; }
+    .palette-info h3 { font-size: 1rem; font-weight: 700; margin-bottom: .3rem; }
+    .palette-info p { font-size: .8rem; color: var(--muted); line-height: 1.5; }
+    .palette-badge {
+      display: inline-block; font-size: .7rem; font-weight: 600;
+      padding: .15rem .5rem; border-radius: 99px; margin-top: .5rem;
+    }
+    .badge-popular { background: rgba(233,69,96,.2); color: #e94560; }
+    .badge-warm { background: rgba(250,189,47,.2); color: #fabd2f; }
+    .badge-cool { background: rgba(69,133,136,.2); color: #83a598; }
+    .badge-soft { background: rgba(152,190,101,.2); color: #b8bb26; }
+
+    /* TERMINAL CARDS */
+    .terminal-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.2rem;
+    }
+    .terminal-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: 2px solid transparent;
+      overflow: hidden;
+      cursor: pointer;
+      transition: border-color .2s, transform .15s;
+    }
+    .terminal-card:hover { transform: translateY(-3px); border-color: rgba(255,255,255,0.2); }
+    .terminal-card.selected { border-color: var(--accent); }
+    .terminal-mock {
+      background: #1e1e2e;
+      padding: 1rem;
+      font-family: 'Courier New', monospace;
+      font-size: .78rem;
+      line-height: 1.6;
+    }
+    .terminal-mock .titlebar {
+      display: flex; align-items: center; gap: .4rem;
+      margin-bottom: .8rem;
+    }
+    .titlebar-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .titlebar-name { color: #6e6a86; font-size: .75rem; margin-left: .3rem; }
+    .t-prompt { color: #cba6f7; }
+    .t-cmd { color: #cdd6f4; }
+    .t-out { color: #a6e3a1; }
+    .t-err { color: #f38ba8; }
+    .t-path { color: #89b4fa; }
+    .t-arrow { color: #94e2d5; }
+    .terminal-info { padding: 1rem; }
+    .terminal-info h3 { font-size: 1rem; font-weight: 700; margin-bottom: .3rem; }
+    .terminal-info p { font-size: .8rem; color: var(--muted); line-height: 1.5; }
+    .tags { display: flex; gap: .4rem; flex-wrap: wrap; margin-top: .6rem; }
+    .tag {
+      font-size: .7rem; padding: .15rem .5rem; border-radius: 99px;
+      background: rgba(255,255,255,0.07); color: var(--muted);
+    }
+
+    /* WALLPAPER GRID */
+    .wallpaper-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 1rem;
+    }
+    .wp-card {
+      border-radius: var(--radius);
+      overflow: hidden;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: border-color .2s, transform .15s;
+      position: relative;
+    }
+    .wp-card:hover { transform: scale(1.02); border-color: rgba(255,255,255,0.25); }
+    .wp-card.selected { border-color: var(--accent); }
+    .wp-preview {
+      width: 100%; aspect-ratio: 16/9;
+      display: block; object-fit: cover;
+    }
+    .wp-gradient {
+      width: 100%; aspect-ratio: 16/9;
+    }
+    .wp-label {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: linear-gradient(transparent, rgba(0,0,0,.7));
+      padding: .5rem .7rem .5rem;
+      font-size: .75rem; font-weight: 600;
+    }
+    .wp-src {
+      font-size: .65rem; color: var(--muted); margin-top: .1rem;
+    }
+
+    /* SUMMARY */
+    .summary-box {
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 1.5rem 2rem;
+    }
+    .summary-row {
+      display: flex; align-items: center;
+      padding: .6rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      gap: 1rem;
+    }
+    .summary-row:last-child { border-bottom: none; }
+    .summary-label { color: var(--muted); font-size: .85rem; width: 160px; flex-shrink: 0; }
+    .summary-value { font-weight: 600; font-size: .9rem; }
+    .summary-value.none { color: var(--muted); font-style: italic; font-weight: 400; }
+
+    /* DEV STACK */
+    .dev-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 1rem;
+    }
+    .dev-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 1.2rem;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .dev-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: .3rem; }
+    .dev-card p { font-size: .8rem; color: var(--muted); line-height: 1.5; }
+    .dev-tools { margin-top: .7rem; display: flex; flex-wrap: wrap; gap: .3rem; }
+    .dev-tool {
+      font-size: .72rem; padding: .2rem .55rem;
+      border-radius: 6px; background: rgba(255,255,255,0.07);
+      color: #cdd6f4;
+    }
+
+    /* GNOME */
+    .gnome-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 1rem;
+    }
+    .gnome-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 1.2rem;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .gnome-card .gicon { font-size: 1.8rem; margin-bottom: .6rem; }
+    .gnome-card h3 { font-size: .95rem; font-weight: 700; margin-bottom: .3rem; }
+    .gnome-card p { font-size: .78rem; color: var(--muted); line-height: 1.5; }
+
+    /* CTA */
+    .cta {
+      text-align: center; padding: 3rem 2rem 5rem;
+    }
+    .cta h2 { font-size: 1.8rem; margin-bottom: .5rem; }
+    .cta p { color: var(--muted); margin-bottom: 1.5rem; }
+    .btn {
+      display: inline-block;
+      background: var(--accent); color: white;
+      padding: .75rem 2rem; border-radius: 8px;
+      font-weight: 700; font-size: 1rem;
+      cursor: pointer; border: none;
+      transition: opacity .2s, transform .1s;
+    }
+    .btn:hover { opacity: .9; transform: scale(1.02); }
+
+    /* DIVIDER */
+    .divider { border: none; border-top: 1px solid rgba(255,255,255,0.06); }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .hero h1 { font-size: 2rem; }
+      nav { gap: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <span class="logo">🎨 Ubuntu Rice</span>
+  <a href="#paletas">Paletas</a>
+  <a href="#terminal">Terminal</a>
+  <a href="#wallpapers">Wallpapers</a>
+  <a href="#gnome">GNOME</a>
+  <a href="#dev">Dev Stack</a>
+  <a href="#resumo">Resumo</a>
+</nav>
+
+<div class="hero">
+  <h1>Deixa seu Ubuntu <span>lindo</span></h1>
+  <p>Explore as opções de tema, terminal e wallpapers antes de criar o projeto. Clique nos cards para selecionar o que mais te agrada.</p>
+</div>
+
+<!-- PALETAS -->
+<section id="paletas">
+  <h2><span class="icon">🎨</span> Paletas de Cores</h2>
+  <p class="section-sub">Define o tom de toda a aparência — terminal, editor, GTK e mais. Cada paleta tem uma personalidade.</p>
+
+  <div class="palette-grid" id="palette-grid">
+
+    <div class="palette-card" data-palette="Catppuccin Mocha" onclick="select(this,'palette')">
+      <div class="palette-swatches">
+        <span style="background:#1e1e2e"></span>
+        <span style="background:#313244"></span>
+        <span style="background:#cba6f7"></span>
+        <span style="background:#89b4fa"></span>
+        <span style="background:#94e2d5"></span>
+        <span style="background:#a6e3a1"></span>
+        <span style="background:#f38ba8"></span>
+        <span style="background:#fab387"></span>
+      </div>
+      <div class="palette-info">
+        <h3>Catppuccin Mocha</h3>
+        <p>Escuro, suave e pastèl. Huge comunidade, suporte em centenas de apps (VSCode, kitty, nvim, Discord...). Estética "cyberdream" pastel.</p>
+        <span class="palette-badge badge-popular">⭐ Mais popular 2024</span>
+      </div>
+    </div>
+
+    <div class="palette-card" data-palette="Dracula" onclick="select(this,'palette')">
+      <div class="palette-swatches">
+        <span style="background:#282a36"></span>
+        <span style="background:#44475a"></span>
+        <span style="background:#bd93f9"></span>
+        <span style="background:#6272a4"></span>
+        <span style="background:#8be9fd"></span>
+        <span style="background:#50fa7b"></span>
+        <span style="background:#ff79c6"></span>
+        <span style="background:#ffb86c"></span>
+      </div>
+      <div class="palette-info">
+        <h3>Dracula</h3>
+        <p>Clássico do mundo dev. Roxo vibrante com verde neon. Extremamente popular, suporte nativo em quase tudo. Estilo vampiro/noturno.</p>
+        <span class="palette-badge badge-popular">⭐ Clássico atemporal</span>
+      </div>
+    </div>
+
+    <div class="palette-card" data-palette="Gruvbox Dark" onclick="select(this,'palette')">
+      <div class="palette-swatches">
+        <span style="background:#282828"></span>
+        <span style="background:#3c3836"></span>
+        <span style="background:#d79921"></span>
+        <span style="background:#458588"></span>
+        <span style="background:#b8bb26"></span>
+        <span style="background:#8ec07c"></span>
+        <span style="background:#cc241d"></span>
+        <span style="background:#fe8019"></span>
+      </div>
+      <div class="palette-info">
+        <h3>Gruvbox Dark</h3>
+        <p>Tons terrosos e quentes. Muito usada por entusiastas de Vim/Neovim. Visual "vintage" retrô com excelente contraste.</p>
+        <span class="palette-badge badge-warm">🟡 Tons quentes</span>
+      </div>
+    </div>
+
+    <div class="palette-card" data-palette="Nord" onclick="select(this,'palette')">
+      <div class="palette-swatches">
+        <span style="background:#2e3440"></span>
+        <span style="background:#3b4252"></span>
+        <span style="background:#5e81ac"></span>
+        <span style="background:#81a1c1"></span>
+        <span style="background:#88c0d0"></span>
+        <span style="background:#a3be8c"></span>
+        <span style="background:#bf616a"></span>
+        <span style="background:#ebcb8b"></span>
+      </div>
+      <div class="palette-info">
+        <h3>Nord</h3>
+        <p>Paleta ártica e minimalista. Azuis frios e tranquilos. Ótimo para longas sessões de trabalho. Estética escandinava clean.</p>
+        <span class="palette-badge badge-cool">🧊 Tons frios</span>
+      </div>
+    </div>
+
+    <div class="palette-card" data-palette="Tokyo Night" onclick="select(this,'palette')">
+      <div class="palette-swatches">
+        <span style="background:#1a1b26"></span>
+        <span style="background:#24283b"></span>
+        <span style="background:#7aa2f7"></span>
+        <span style="background:#bb9af7"></span>
+        <span style="background:#7dcfff"></span>
+        <span style="background:#9ece6a"></span>
+        <span style="background:#f7768e"></span>
+        <span style="background:#e0af68"></span>
+      </div>
+      <div class="palette-info">
+        <h3>Tokyo Night</h3>
+        <p>Inspirado nos neons noturnos de Tóquio. Azuis profundos com roxos e ciano. Muito usado em VSCode e Neovim. Cyberpunk elegante.</p>
+        <span class="palette-badge badge-cool">🌃 Neon urbano</span>
+      </div>
+    </div>
+
+    <div class="palette-card" data-palette="Everforest" onclick="select(this,'palette')">
+      <div class="palette-swatches">
+        <span style="background:#2d353b"></span>
+        <span style="background:#343f44"></span>
+        <span style="background:#83c092"></span>
+        <span style="background:#7fbbb3"></span>
+        <span style="background:#a7c080"></span>
+        <span style="background:#dbbc7f"></span>
+        <span style="background:#e67e80"></span>
+        <span style="background:#d699b6"></span>
+      </div>
+      <div class="palette-info">
+        <h3>Everforest</h3>
+        <p>Verde floresta, amigável aos olhos. Criado pensando em conforto visual por longas horas. Calmo, natural e relaxante.</p>
+        <span class="palette-badge badge-soft">🌿 Conforto visual</span>
+      </div>
+    </div>
+
+    <div class="palette-card" data-palette="Kanagawa" onclick="select(this,'palette')">
+      <div class="palette-swatches">
+        <span style="background:#1f1f28"></span>
+        <span style="background:#2a2a37"></span>
+        <span style="background:#7e9cd8"></span>
+        <span style="background:#957fb8"></span>
+        <span style="background:#6a9589"></span>
+        <span style="background:#98bb6c"></span>
+        <span style="background:#e46876"></span>
+        <span style="background:#dca561"></span>
+      </div>
+      <div class="palette-info">
+        <h3>Kanagawa</h3>
+        <p>Inspirado na arte japonesa "A Grande Onda". Tons de índigo e cinza com detalhes suaves. Estética oriental minimalista.</p>
+        <span class="palette-badge badge-cool">🌊 Arte japonesa</span>
+      </div>
+    </div>
+
+    <div class="palette-card" data-palette="Rose Pine" onclick="select(this,'palette')">
+      <div class="palette-swatches">
+        <span style="background:#191724"></span>
+        <span style="background:#1f1d2e"></span>
+        <span style="background:#c4a7e7"></span>
+        <span style="background:#9ccfd8"></span>
+        <span style="background:#f6c177"></span>
+        <span style="background:#ebbcba"></span>
+        <span style="background:#eb6f92"></span>
+        <span style="background:#31748f"></span>
+      </div>
+      <div class="palette-info">
+        <h3>Rosé Pine</h3>
+        <p>Roxo escuro com rosas e dourados. Elegante e suave. Boa para quem gosta de estética "cottagecore" ou dark feminino.</p>
+        <span class="palette-badge badge-popular">🌹 Elegante</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- TERMINAL -->
+<section id="terminal">
+  <h2><span class="icon">💻</span> Emulador de Terminal</h2>
+  <p class="section-sub">O terminal é onde você vive. Cada opção tem características diferentes — GPU acceleration, ligatures, customização e performance.</p>
+
+  <div class="terminal-grid">
+
+    <div class="terminal-card" data-terminal="Kitty" onclick="select(this,'terminal')">
+      <div class="terminal-mock">
+        <div class="titlebar">
+          <span class="titlebar-dot" style="background:#ff5f56"></span>
+          <span class="titlebar-dot" style="background:#ffbd2e"></span>
+          <span class="titlebar-dot" style="background:#27c93f"></span>
+          <span class="titlebar-name">kitty — zsh</span>
+        </div>
+        <div><span class="t-path">~/projects</span> <span class="t-arrow">❯</span> <span class="t-cmd">ls -la</span></div>
+        <div><span class="t-out">drwxr-xr-x  ricing</span></div>
+        <div><span class="t-out">drwxr-xr-x  odysseus</span></div>
+        <div><span class="t-path">~/projects</span> <span class="t-arrow">❯</span> <span class="t-cmd">node --version</span></div>
+        <div><span class="t-out">v22.3.0</span></div>
+        <div><span class="t-path">~/projects</span> <span class="t-arrow">❯</span> <span class="t-prompt">▊</span></div>
+      </div>
+      <div class="terminal-info">
+        <h3>Kitty</h3>
+        <p>Terminal moderno com GPU acceleration via OpenGL. Suporta imagens inline, tabs e splits nativos, e é altamente scriptável. Favorito da cena ricing.</p>
+        <div class="tags">
+          <span class="tag">GPU accelerated</span>
+          <span class="tag">imagens inline</span>
+          <span class="tag">splits nativos</span>
+          <span class="tag">Python config</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="terminal-card" data-terminal="Alacritty" onclick="select(this,'terminal')">
+      <div class="terminal-mock">
+        <div class="titlebar">
+          <span class="titlebar-dot" style="background:#ff5f56"></span>
+          <span class="titlebar-dot" style="background:#ffbd2e"></span>
+          <span class="titlebar-dot" style="background:#27c93f"></span>
+          <span class="titlebar-name">alacritty</span>
+        </div>
+        <div><span class="t-prompt">luiz@ubuntu</span> <span class="t-arrow">~</span> <span class="t-cmd">$ cargo build</span></div>
+        <div><span class="t-out">   Compiling ricing v0.1.0</span></div>
+        <div><span class="t-out">    Finished in 2.3s</span></div>
+        <div><span class="t-prompt">luiz@ubuntu</span> <span class="t-arrow">~</span> <span class="t-cmd">$ python3 main.py</span></div>
+        <div><span class="t-out">Server running on :8000</span></div>
+        <div><span class="t-prompt">luiz@ubuntu</span> <span class="t-arrow">~</span> <span class="t-cmd">$ <span class="t-prompt">▊</span></span></div>
+      </div>
+      <div class="terminal-info">
+        <h3>Alacritty</h3>
+        <p>O terminal mais rápido do mundo, escrito em Rust. Zero features desnecessárias — sem tabs, sem splits. Simples, ultra-performático. Config via TOML.</p>
+        <div class="tags">
+          <span class="tag">Rust</span>
+          <span class="tag">super rápido</span>
+          <span class="tag">minimalista</span>
+          <span class="tag">TOML config</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="terminal-card" data-terminal="WezTerm" onclick="select(this,'terminal')">
+      <div class="terminal-mock">
+        <div class="titlebar">
+          <span class="titlebar-dot" style="background:#ff5f56"></span>
+          <span class="titlebar-dot" style="background:#ffbd2e"></span>
+          <span class="titlebar-dot" style="background:#27c93f"></span>
+          <span class="titlebar-name">WezTerm — 1/3 tabs</span>
+        </div>
+        <div><span style="color:#6e6a86">Tab 1: zsh &nbsp; Tab 2: node &nbsp; Tab 3: python</span></div>
+        <div></div>
+        <div><span class="t-path">~/projects/ricing</span> <span class="t-arrow">on</span> <span style="color:#f38ba8"> main</span></div>
+        <div><span class="t-arrow">❯</span> <span class="t-cmd">git status</span></div>
+        <div><span class="t-out">nothing to commit</span></div>
+        <div><span class="t-arrow">❯</span> <span class="t-prompt">▊</span></div>
+      </div>
+      <div class="terminal-info">
+        <h3>WezTerm</h3>
+        <p>GPU accelerated, escrito em Rust, configurado em Lua. Multiplexer embutido (tabs, splits, workspaces). O mais completo — compite com tmux sozinho.</p>
+        <div class="tags">
+          <span class="tag">Lua config</span>
+          <span class="tag">multiplexer</span>
+          <span class="tag">GPU accelerated</span>
+          <span class="tag">cross-platform</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <br/>
+  <p style="color: var(--muted); font-size:.85rem;">💡 <strong style="color:var(--text)">Dica:</strong> Qualquer terminal acima pode usar Zsh + Starship, que cuida da aparência do prompt independente do emulador.</p>
+</section>
+
+<hr class="divider" />
+
+<!-- WALLPAPERS -->
+<section id="wallpapers">
+  <h2><span class="icon">🖼️</span> Wallpapers</h2>
+  <p class="section-sub">Referências de estilos para cada paleta. Links para as fontes originais — todas gratuitas e de alta qualidade.</p>
+
+  <div class="wallpaper-grid">
+
+    <div class="wp-card" onclick="select(this,'wallpaper')" data-wallpaper="Catppuccin Mocha Abstract">
+      <svg class="wp-gradient" viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="g1" cx="30%" cy="40%" r="60%">
+            <stop offset="0%" stop-color="#cba6f7" stop-opacity=".6"/>
+            <stop offset="100%" stop-color="#1e1e2e"/>
+          </radialGradient>
+          <radialGradient id="g1b" cx="80%" cy="70%" r="50%">
+            <stop offset="0%" stop-color="#89b4fa" stop-opacity=".4"/>
+            <stop offset="100%" stop-color="#1e1e2e" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+        <rect width="320" height="180" fill="#1e1e2e"/>
+        <rect width="320" height="180" fill="url(#g1)"/>
+        <rect width="320" height="180" fill="url(#g1b)"/>
+        <circle cx="160" cy="90" r="50" fill="none" stroke="#cba6f7" stroke-width=".5" opacity=".3"/>
+        <circle cx="160" cy="90" r="70" fill="none" stroke="#89b4fa" stroke-width=".5" opacity=".2"/>
+      </svg>
+      <div class="wp-label">
+        Catppuccin Abstract
+        <div class="wp-src">github.com/catppuccin/wallpapers</div>
+      </div>
+    </div>
+
+    <div class="wp-card" onclick="select(this,'wallpaper')" data-wallpaper="Minimalist Mountain Nord">
+      <svg class="wp-gradient" viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="g2" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#2e3440"/>
+            <stop offset="100%" stop-color="#3b4252"/>
+          </linearGradient>
+        </defs>
+        <rect width="320" height="180" fill="url(#g2)"/>
+        <polygon points="0,130 60,60 120,100 180,40 240,80 320,30 320,180 0,180" fill="#434c5e"/>
+        <polygon points="0,150 80,90 150,120 220,70 320,100 320,180 0,180" fill="#3b4252"/>
+        <circle cx="260" cy="35" r="18" fill="#ebcb8b" opacity=".8"/>
+        <circle cx="260" cy="35" r="22" fill="#ebcb8b" opacity=".15"/>
+      </svg>
+      <div class="wp-label">
+        Nord Mountains
+        <div class="wp-src">nordtheme.com/ports/wallpapers</div>
+      </div>
+    </div>
+
+    <div class="wp-card" onclick="select(this,'wallpaper')" data-wallpaper="Tokyo Night Cityscape">
+      <svg class="wp-gradient" viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg">
+        <rect width="320" height="180" fill="#1a1b26"/>
+        <rect y="0" width="320" height="90" fill="#24283b"/>
+        <rect y="80" x="0" width="320" height="5" fill="#7aa2f7" opacity=".2"/>
+        <!-- buildings -->
+        <rect x="10" y="60" width="25" height="120" fill="#24283b"/>
+        <rect x="40" y="40" width="30" height="140" fill="#1f2335"/>
+        <rect x="75" y="70" width="20" height="110" fill="#24283b"/>
+        <rect x="100" y="30" width="35" height="150" fill="#1f2335"/>
+        <rect x="140" y="55" width="25" height="125" fill="#24283b"/>
+        <rect x="170" y="20" width="40" height="160" fill="#1f2335"/>
+        <rect x="215" y="50" width="28" height="130" fill="#24283b"/>
+        <rect x="248" y="35" width="32" height="145" fill="#1f2335"/>
+        <rect x="285" y="65" width="35" height="115" fill="#24283b"/>
+        <!-- neon lights -->
+        <rect x="45" y="55" width="2" height="2" fill="#7aa2f7"/>
+        <rect x="108" y="48" width="3" height="3" fill="#bb9af7"/>
+        <rect x="175" y="38" width="2" height="2" fill="#7dcfff"/>
+        <rect x="252" y="50" width="3" height="3" fill="#f7768e"/>
+        <rect y="130" width="320" height="50" fill="#1a1b26" opacity=".6"/>
+      </svg>
+      <div class="wp-label">
+        Tokyo Night City
+        <div class="wp-src">github.com/enkia/tokyo-night-wallpapers</div>
+      </div>
+    </div>
+
+    <div class="wp-card" onclick="select(this,'wallpaper')" data-wallpaper="Everforest Forest">
+      <svg class="wp-gradient" viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="g4sky" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#2d353b"/>
+            <stop offset="100%" stop-color="#3d4f56"/>
+          </linearGradient>
+        </defs>
+        <rect width="320" height="180" fill="url(#g4sky)"/>
+        <!-- trees -->
+        <polygon points="30,180 55,100 80,180" fill="#4a5e54"/>
+        <polygon points="20,180 50,80 80,180" fill="#3d4f44"/>
+        <polygon points="70,180 100,90 130,180" fill="#4a5e54"/>
+        <polygon points="60,180 95,65 130,180" fill="#3d4f44"/>
+        <polygon points="120,180 155,85 190,180" fill="#4a5e54"/>
+        <polygon points="110,180 150,60 190,180" fill="#3d4f44"/>
+        <polygon points="180,180 210,95 240,180" fill="#4a5e54"/>
+        <polygon points="220,180 255,75 290,180" fill="#3d4f44"/>
+        <polygon points="270,180 300,100 320,160 320,180" fill="#4a5e54"/>
+        <!-- moon -->
+        <circle cx="160" cy="40" r="20" fill="#dbbc7f" opacity=".7"/>
+        <circle cx="166" cy="36" r="17" fill="#3d4f56" opacity=".5"/>
+        <rect y="150" width="320" height="30" fill="#2d353b" opacity=".5"/>
+      </svg>
+      <div class="wp-label">
+        Everforest Night
+        <div class="wp-src">github.com/sainnhe/everforest/wallpapers</div>
+      </div>
+    </div>
+
+    <div class="wp-card" onclick="select(this,'wallpaper')" data-wallpaper="Gruvbox Sunset">
+      <svg class="wp-gradient" viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="g5" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#282828"/>
+            <stop offset="40%" stop-color="#3c3836"/>
+            <stop offset="70%" stop-color="#d65d0e" stop-opacity=".5"/>
+            <stop offset="100%" stop-color="#cc241d" stop-opacity=".3"/>
+          </linearGradient>
+        </defs>
+        <rect width="320" height="180" fill="url(#g5)"/>
+        <circle cx="160" cy="120" r="45" fill="#d79921" opacity=".85"/>
+        <circle cx="160" cy="120" r="50" fill="#fe8019" opacity=".2"/>
+        <rect y="120" width="320" height="60" fill="#282828"/>
+        <rect x="0" y="110" width="60" height="70" fill="#3c3836"/>
+        <rect x="70" y="95" width="40" height="85" fill="#282828"/>
+        <rect x="200" y="100" width="50" height="80" fill="#3c3836"/>
+        <rect x="260" y="88" width="60" height="92" fill="#282828"/>
+      </svg>
+      <div class="wp-label">
+        Gruvbox Sunset
+        <div class="wp-src">gruvbox-contrib/wallpapers</div>
+      </div>
+    </div>
+
+    <div class="wp-card" onclick="select(this,'wallpaper')" data-wallpaper="Dracula Space">
+      <svg class="wp-gradient" viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="g6" cx="50%" cy="50%" r="60%">
+            <stop offset="0%" stop-color="#44475a"/>
+            <stop offset="100%" stop-color="#282a36"/>
+          </radialGradient>
+        </defs>
+        <rect width="320" height="180" fill="url(#g6)"/>
+        <!-- stars -->
+        <circle cx="20" cy="15" r="1" fill="white" opacity=".8"/>
+        <circle cx="60" cy="35" r="1.2" fill="white" opacity=".6"/>
+        <circle cx="100" cy="10" r="1" fill="white" opacity=".9"/>
+        <circle cx="150" cy="25" r="1.5" fill="white" opacity=".7"/>
+        <circle cx="200" cy="15" r="1" fill="white" opacity=".8"/>
+        <circle cx="260" cy="30" r="1.2" fill="white" opacity=".6"/>
+        <circle cx="300" cy="10" r="1" fill="white" opacity=".9"/>
+        <circle cx="40" cy="55" r="1" fill="white" opacity=".5"/>
+        <circle cx="80" cy="70" r="1.2" fill="white" opacity=".7"/>
+        <circle cx="220" cy="60" r="1" fill="white" opacity=".6"/>
+        <circle cx="280" cy="50" r="1.5" fill="white" opacity=".8"/>
+        <!-- nebula -->
+        <ellipse cx="160" cy="90" rx="90" ry="60" fill="#bd93f9" opacity=".08"/>
+        <ellipse cx="130" cy="80" rx="60" ry="40" fill="#ff79c6" opacity=".06"/>
+        <ellipse cx="190" cy="100" rx="70" ry="45" fill="#6272a4" opacity=".1"/>
+        <!-- planet -->
+        <circle cx="230" cy="130" r="35" fill="#44475a"/>
+        <ellipse cx="230" cy="130" rx="55" ry="12" fill="none" stroke="#bd93f9" stroke-width="3" opacity=".5" transform="rotate(-20 230 130)"/>
+      </svg>
+      <div class="wp-label">
+        Dracula Space
+        <div class="wp-src">draculatheme.com/wallpaper</div>
+      </div>
+    </div>
+
+    <div class="wp-card" onclick="select(this,'wallpaper')" data-wallpaper="Rosé Pine Garden">
+      <svg class="wp-gradient" viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="g7" cx="50%" cy="30%" r="70%">
+            <stop offset="0%" stop-color="#26233a"/>
+            <stop offset="100%" stop-color="#191724"/>
+          </radialGradient>
+        </defs>
+        <rect width="320" height="180" fill="url(#g7)"/>
+        <!-- petals scattered -->
+        <ellipse cx="80" cy="60" rx="8" ry="4" fill="#eb6f92" opacity=".4" transform="rotate(-30 80 60)"/>
+        <ellipse cx="140" cy="40" rx="6" ry="3" fill="#c4a7e7" opacity=".3" transform="rotate(15 140 40)"/>
+        <ellipse cx="220" cy="70" rx="9" ry="4" fill="#ebbcba" opacity=".35" transform="rotate(-45 220 70)"/>
+        <ellipse cx="50" cy="110" rx="7" ry="3" fill="#eb6f92" opacity=".3" transform="rotate(20 50 110)"/>
+        <ellipse cx="270" cy="50" rx="6" ry="3" fill="#f6c177" opacity=".3" transform="rotate(-10 270 50)"/>
+        <!-- main flower -->
+        <circle cx="160" cy="95" r="5" fill="#f6c177" opacity=".9"/>
+        <ellipse cx="160" cy="78" rx="7" ry="12" fill="#ebbcba" opacity=".7"/>
+        <ellipse cx="160" cy="78" rx="7" ry="12" fill="#eb6f92" opacity=".3" transform="rotate(45 160 95)"/>
+        <ellipse cx="160" cy="78" rx="7" ry="12" fill="#c4a7e7" opacity=".3" transform="rotate(90 160 95)"/>
+        <ellipse cx="160" cy="78" rx="7" ry="12" fill="#ebbcba" opacity=".3" transform="rotate(135 160 95)"/>
+        <ellipse cx="160" cy="78" rx="7" ry="12" fill="#eb6f92" opacity=".3" transform="rotate(180 160 95)"/>
+        <ellipse cx="160" cy="78" rx="7" ry="12" fill="#c4a7e7" opacity=".3" transform="rotate(225 160 95)"/>
+        <ellipse cx="160" cy="78" rx="7" ry="12" fill="#ebbcba" opacity=".3" transform="rotate(270 160 95)"/>
+        <ellipse cx="160" cy="78" rx="7" ry="12" fill="#eb6f92" opacity=".3" transform="rotate(315 160 95)"/>
+        <circle cx="160" cy="95" r="5" fill="#f6c177" opacity=".9"/>
+      </svg>
+      <div class="wp-label">
+        Rosé Pine Garden
+        <div class="wp-src">rosepinetheme.com/wallpapers</div>
+      </div>
+    </div>
+
+    <div class="wp-card" onclick="select(this,'wallpaper')" data-wallpaper="Kanagawa Wave">
+      <svg class="wp-gradient" viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="g8sky" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#1f1f28"/>
+            <stop offset="100%" stop-color="#2a2a37"/>
+          </linearGradient>
+        </defs>
+        <rect width="320" height="180" fill="url(#g8sky)"/>
+        <!-- wave layers -->
+        <path d="M0,130 Q40,110 80,125 T160,115 T240,125 T320,110 L320,180 L0,180 Z" fill="#223249" opacity=".9"/>
+        <path d="M0,145 Q40,125 80,138 T160,128 T240,138 T320,123 L320,180 L0,180 Z" fill="#1d2d3f"/>
+        <path d="M0,160 Q40,140 80,153 T160,143 T240,153 T320,140 L320,180 L0,180 Z" fill="#1f1f28"/>
+        <!-- mount fuji silhouette -->
+        <polygon points="130,90 160,30 190,90" fill="#2a2a37"/>
+        <polygon points="145,90 160,55 175,90" fill="#363646" opacity=".6"/>
+        <!-- sun -->
+        <circle cx="160" cy="60" r="18" fill="#e46876" opacity=".5"/>
+        <circle cx="160" cy="60" r="14" fill="#dca561" opacity=".7"/>
+      </svg>
+      <div class="wp-label">
+        Kanagawa Wave
+        <div class="wp-src">github.com/rebelot/kanagawa.nvim</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- GNOME -->
+<section id="gnome">
+  <h2><span class="icon">🖥️</span> Customizações GNOME</h2>
+  <p class="section-sub">O que será configurado no seu desktop além do terminal.</p>
+  <div class="gnome-grid">
+    <div class="gnome-card">
+      <div class="gicon">🎨</div>
+      <h3>GTK Theme</h3>
+      <p>Tema de janelas e apps GTK. Vamos instalar a versão do tema da paleta escolhida (ex: Catppuccin GTK, Dracula GTK).</p>
+    </div>
+    <div class="gnome-card">
+      <div class="gicon">🔲</div>
+      <h3>Ícones: Papirus</h3>
+      <p>Pack de ícones flat e moderno, com variantes coloridas para qualquer paleta. Muito popular e ativo.</p>
+    </div>
+    <div class="gnome-card">
+      <div class="gicon">🧩</div>
+      <h3>Extensions</h3>
+      <p><strong>Blur my Shell</strong> — blur no dock e painel<br/><strong>Just Perfection</strong> — hide/ajuste de elementos<br/><strong>Dash to Dock</strong> — dock moderno</p>
+    </div>
+    <div class="gnome-card">
+      <div class="gicon">🔤</div>
+      <h3>Fontes</h3>
+      <p><strong>JetBrains Mono Nerd Font</strong> para terminal e código. <strong>Inter</strong> para UI. Suporte completo a ligatures e ícones.</p>
+    </div>
+    <div class="gnome-card">
+      <div class="gicon">⌨️</div>
+      <h3>Shell: Zsh + Starship</h3>
+      <p>Zsh com <strong>Oh My Zsh</strong> para plugins (autosuggestions, syntax highlight). <strong>Starship</strong> para o prompt — bonito e rápido.</p>
+    </div>
+    <div class="gnome-card">
+      <div class="gicon">⚙️</div>
+      <h3>gsettings</h3>
+      <p>Script para aplicar configurações: tema, ícones, fonte do sistema, botões de janela, e dark mode automaticamente.</p>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- DEV STACK -->
+<section id="dev">
+  <h2><span class="icon">⚙️</span> Dev Stack</h2>
+  <p class="section-sub">Scripts de instalação automatizados para seu ambiente de desenvolvimento.</p>
+  <div class="dev-grid">
+    <div class="dev-card">
+      <h3>🟢 Node.js</h3>
+      <p>Instalado via <strong>nvm</strong> (Node Version Manager). Permite múltiplas versões e atualização fácil.</p>
+      <div class="dev-tools">
+        <span class="dev-tool">nvm</span>
+        <span class="dev-tool">node LTS</span>
+        <span class="dev-tool">npm</span>
+        <span class="dev-tool">pnpm</span>
+      </div>
+    </div>
+    <div class="dev-card">
+      <h3>🐍 Python</h3>
+      <p>Instalado via <strong>pyenv</strong> para gerenciar versões. Inclui pip, venv e poetry para ambientes.</p>
+      <div class="dev-tools">
+        <span class="dev-tool">pyenv</span>
+        <span class="dev-tool">python 3.12</span>
+        <span class="dev-tool">pip</span>
+        <span class="dev-tool">poetry</span>
+      </div>
+    </div>
+    <div class="dev-card">
+      <h3>🦀 Rust</h3>
+      <p>Instalado via <strong>rustup</strong> — o jeito oficial. Inclui cargo, rustfmt e clippy.</p>
+      <div class="dev-tools">
+        <span class="dev-tool">rustup</span>
+        <span class="dev-tool">cargo</span>
+        <span class="dev-tool">rustfmt</span>
+        <span class="dev-tool">clippy</span>
+      </div>
+    </div>
+    <div class="dev-card">
+      <h3>🔧 Ferramentas CLI</h3>
+      <p>Modernizações das ferramentas clássicas do Unix com estética e UX melhoradas.</p>
+      <div class="dev-tools">
+        <span class="dev-tool">bat (cat)</span>
+        <span class="dev-tool">eza (ls)</span>
+        <span class="dev-tool">fd (find)</span>
+        <span class="dev-tool">ripgrep</span>
+        <span class="dev-tool">fzf</span>
+        <span class="dev-tool">zoxide (cd)</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- RESUMO -->
+<section id="resumo">
+  <h2><span class="icon">📋</span> Suas Escolhas</h2>
+  <p class="section-sub">Clique nos cards acima para preencher seu setup. Isso vai guiar a criação do projeto.</p>
+  <div class="summary-box">
+    <div class="summary-row">
+      <span class="summary-label">🎨 Paleta de cores</span>
+      <span class="summary-value none" id="s-palette">Nenhuma selecionada</span>
+    </div>
+    <div class="summary-row">
+      <span class="summary-label">💻 Terminal</span>
+      <span class="summary-value none" id="s-terminal">Nenhum selecionado</span>
+    </div>
+    <div class="summary-row">
+      <span class="summary-label">🖼️ Estilo de wallpaper</span>
+      <span class="summary-value none" id="s-wallpaper">Nenhum selecionado</span>
+    </div>
+    <div class="summary-row">
+      <span class="summary-label">🖥️ Desktop</span>
+      <span class="summary-value">GNOME (Ubuntu)</span>
+    </div>
+    <div class="summary-row">
+      <span class="summary-label">⚙️ Dev Stack</span>
+      <span class="summary-value">Node (nvm) + Python (pyenv) + Rust (rustup)</span>
+    </div>
+    <div class="summary-row">
+      <span class="summary-label">⌨️ Shell</span>
+      <span class="summary-value">Zsh + Oh My Zsh + Starship</span>
+    </div>
+    <div class="summary-row">
+      <span class="summary-label">🔤 Fonte</span>
+      <span class="summary-value">JetBrains Mono Nerd Font</span>
+    </div>
+  </div>
+</section>
+
+<div class="cta">
+  <h2>Pronto para começar?</h2>
+  <p>Faça suas escolhas acima e me diga — vou criar o projeto com scripts, dotfiles e tudo configurado.</p>
+  <button class="btn" onclick="copySummary()">📋 Copiar resumo das escolhas</button>
+</div>
+
+<script>
+  const selections = { palette: null, terminal: null, wallpaper: null };
+
+  function select(el, type) {
+    document.querySelectorAll(`.${type}-card, .wp-card`).forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    const val = el.dataset[type] || el.dataset.wallpaper;
+    selections[type] = val;
+    const id = type === 'wallpaper' ? 's-wallpaper' : `s-${type}`;
+    const span = document.getElementById(id);
+    if (span) {
+      span.textContent = val;
+      span.classList.remove('none');
+    }
+  }
+
+  // re-attach select for wallpapers (dataset key differs)
+  document.querySelectorAll('.wp-card').forEach(card => {
+    card.onclick = () => {
+      document.querySelectorAll('.wp-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      selections.wallpaper = card.dataset.wallpaper;
+      const span = document.getElementById('s-wallpaper');
+      span.textContent = card.dataset.wallpaper;
+      span.classList.remove('none');
+    };
+  });
+
+  function copySummary() {
+    const txt = `Ubuntu Ricing Setup:
+- Paleta: ${selections.palette || 'não escolhida'}
+- Terminal: ${selections.terminal || 'não escolhido'}
+- Wallpaper: ${selections.wallpaper || 'não escolhido'}
+- Desktop: GNOME
+- Dev: Node (nvm) + Python (pyenv) + Rust (rustup)
+- Shell: Zsh + Oh My Zsh + Starship
+- Fonte: JetBrains Mono Nerd Font`;
+    navigator.clipboard.writeText(txt).then(() => alert('Resumo copiado!')).catch(() => {
+      prompt('Copie manualmente:', txt);
+    });
+  }
+
+  // smooth scroll
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      document.querySelector(a.getAttribute('href'))?.scrollIntoView({ behavior: 'smooth' });
+    });
+  });
+</script>
+</body>
+</html>
