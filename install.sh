@@ -15,6 +15,13 @@ err()  { echo -e "${RED}[ err]${NC} $*"; exit 1; }
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# Pré-requisitos mínimos — curl pode não vir em VMs limpas
+if ! command -v curl &>/dev/null; then
+  echo -e "${YELLOW}[warn]${NC} curl não encontrado — instalando pré-requisitos..."
+  sudo apt-get update -qq
+  sudo apt-get install -y curl git
+fi
+
 echo -e "${PURPLE}"
 cat << 'EOF'
   ██╗  ██╗ █████╗ ███╗   ██╗ █████╗  ██████╗  █████╗ ██╗    ██╗ █████╗
@@ -42,8 +49,11 @@ run_module() {
   if [[ -z "$ONLY" || "$ONLY" == "$name" ]]; then
     echo ""
     log "━━ $name ━━"
-    bash "$script"
-    ok "$name concluído"
+    if bash "$script"; then
+      ok "$name concluído"
+    else
+      warn "$name falhou — continuando com próximo módulo"
+    fi
   fi
 }
 
