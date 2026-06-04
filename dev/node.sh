@@ -21,7 +21,7 @@ export NVM_DIR="$HOME/.nvm"
 log "Instalando Node LTS..."
 nvm install --lts
 nvm use --lts
-nvm alias default 'lts/*'
+nvm alias default node 2>/dev/null || true
 
 log "Instalando pacotes globais..."
 npm install -g pnpm typescript ts-node

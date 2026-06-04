@@ -34,15 +34,14 @@ download() {
   echo "$dest"
 }
 
-# Kanagawa Wave — repositório oficial do tema GTK
-WP1=$(download "kanagawa-wave.png" \
-  "https://raw.githubusercontent.com/Fausto-Korpsvart/Kanagawa-GKT-Theme/main/wallpapers/kanagawa-wave.png")
+BASE_G="https://raw.githubusercontent.com/Gurjaka/Kanagawa-Wallpapers/main/wallpapers"
+BASE_P="https://raw.githubusercontent.com/philikarus/Kanagawa-wallpapers/main/wallpapers/landscape"
 
-# Kanagawa Dragon (variante mais escura)
-WP2=$(download "kanagawa-dragon.png" \
-  "https://raw.githubusercontent.com/Fausto-Korpsvart/Kanagawa-GKT-Theme/main/wallpapers/kanagawa-dragon.png")
+WP1=$(download "great-wave.jpg"        "$BASE_G/great_wave_of_kanagawa.jpg")
+WP2=$(download "mountains-retreat.jpg" "$BASE_G/mountains-retreat.jpg")
+     download  "abstract-00252.png"    "$BASE_P/00252.png" > /dev/null
 
-# Aplica o Wave como wallpaper ativo
+# Aplica o Great Wave como wallpaper padrão
 if [[ -f "$WP1" ]]; then
   set_wallpaper "$WP1"
 elif [[ -f "$WP2" ]]; then

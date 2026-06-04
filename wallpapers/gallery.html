@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Kanagawa Wallpapers</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #1F1F28;
+      color: #DCD7BA;
+      font-family: system-ui, sans-serif;
+      padding: 2rem;
+    }
+    h1 { font-size: 1.4rem; margin-bottom: .3rem; color: #7E9CD8; }
+    p  { color: #727169; font-size: .85rem; margin-bottom: 2rem; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 1rem;
+    }
+    .card {
+      border-radius: 10px;
+      overflow: hidden;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: border-color .2s, transform .15s;
+      background: #2A2A37;
+    }
+    .card:hover  { transform: scale(1.02); border-color: #7E9CD8; }
+    .card.active { border-color: #98BB6C; }
+    .card img {
+      width: 100%; aspect-ratio: 16/9;
+      object-fit: cover; display: block;
+    }
+    .info {
+      padding: .6rem .8rem;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .name { font-size: .85rem; font-weight: 600; }
+    .btn-apply {
+      background: #7E9CD8; color: #1F1F28;
+      border: none; border-radius: 6px;
+      padding: .3rem .75rem; font-size: .78rem; font-weight: 700;
+      cursor: pointer; transition: opacity .2s;
+    }
+    .btn-apply:hover { opacity: .85; }
+    .status {
+      margin-top: 1.5rem; padding: .7rem 1rem;
+      background: #2A2A37; border-radius: 8px;
+      font-size: .85rem; color: #98BB6C;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>🖼️ Kanagawa Wallpapers</h1>
+  <p>Clique em "Aplicar" para setar o wallpaper via gsettings. Abra um terminal e execute o comando mostrado.</p>
+
+  <div class="grid" id="grid"></div>
+  <div class="status" id="status"></div>
+
+<script>
+const wallpapers = [
+  { file: "great-wave.jpg",        label: "Great Wave of Kanagawa" },
+  { file: "fantasy-lake.png",      label: "Fantasy Lake" },
+  { file: "mountains-retreat.jpg", label: "Mountains Retreat" },
+  { file: "mountains-ign.png",     label: "Mountains IGN" },
+  { file: "chainsaw-angel.jpg",    label: "Chainsaw Angel Lake" },
+  { file: "phil-00252.png",        label: "Abstract — 00252" },
+  { file: "phil-28614.png",        label: "Landscape — 28614" },
+  { file: "phil-6604a.png",        label: "Landscape — 6604a" },
+  { file: "phil-b4a4d.png",        label: "Abstract — b4a4d" },
+  { file: "phil-e7741.png",        label: "Abstract — e7741" },
+];
+
+const grid   = document.getElementById('grid');
+const status = document.getElementById('status');
+
+const absPath = (file) => {
+  const url = new URL(file, window.location.href);
+  return url.pathname;
+};
+
+wallpapers.forEach(wp => {
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.innerHTML = `
+    <img src="${wp.file}" alt="${wp.label}" loading="lazy" />
+    <div class="info">
+      <span class="name">${wp.label}</span>
+      <button class="btn-apply" onclick="apply('${wp.file}', '${wp.label}', this)">Aplicar</button>
+    </div>
+  `;
+  grid.appendChild(card);
+});
+
+function apply(file, label, btn) {
+  document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+  btn.closest('.card').classList.add('active');
+
+  const path = absPath(file);
+  const cmd = `gsettings set org.gnome.desktop.background picture-uri "file://${path}" && gsettings set org.gnome.desktop.background picture-uri-dark "file://${path}" && gsettings set org.gnome.desktop.background picture-options zoom`;
+
+  navigator.clipboard.writeText(cmd).catch(() => {});
+
+  status.style.display = 'block';
+  status.innerHTML = `✓ <strong>${label}</strong> selecionado.<br><br>
+    Cole no terminal:<br>
+    <code style="font-size:.78rem;color:#DCA561;word-break:break-all;">${cmd}</code>`;
+}
+</script>
+</body>
+</html>
