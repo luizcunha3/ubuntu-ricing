@@ -40,31 +40,35 @@ else
   }
 fi
 
-# ── Zen Browser ───────────────────────────────────────────────────────
-ZEN_FLATPAK="io.github.zen_browser.zen"
-if flatpak list 2>/dev/null | grep -q "$ZEN_FLATPAK" || command -v zen-browser &>/dev/null; then
+# ── Zen Browser (AppImage — Flatpak ainda instável no Flathub) ────────
+ZEN_DIR="$HOME/.local/opt/zen-browser"
+if [[ -f "$ZEN_DIR/zen.AppImage" ]] || command -v zen-browser &>/dev/null; then
   skipped "Zen Browser"
 else
-  log "Instalando Zen Browser via Flatpak..."
-  flatpak remote-add --if-not-exists --user flathub-beta \
-    https://flathub.org/beta-repo/flathub-beta.flatpakrepo 2>/dev/null || true
+  log "Instalando Zen Browser via AppImage..."
+  mkdir -p "$ZEN_DIR" "$HOME/.local/bin" "$HOME/.local/share/applications"
 
-  if flatpak install -y --user flathub "$ZEN_FLATPAK" 2>/dev/null; then
-    ok "Zen Browser instalado!"
-  elif flatpak install -y --user flathub-beta "$ZEN_FLATPAK" 2>/dev/null; then
-    ok "Zen Browser instalado (beta)!"
+  ZEN_URL=$(curl -fsSL --max-time 10 \
+    "https://api.github.com/repos/zen-browser/desktop/releases/latest" \
+    | grep -o '"browser_download_url": "[^"]*x86_64\.AppImage"' \
+    | head -1 | cut -d'"' -f4)
+
+  if [[ -z "$ZEN_URL" ]]; then
+    warn "Não foi possível obter URL do Zen Browser — acesse: https://zen-browser.app/download"
   else
-    log "Flatpak falhou — baixando AppImage..."
-    ZEN_DIR="$HOME/.local/opt/zen-browser"
-    mkdir -p "$ZEN_DIR" "$HOME/.local/bin" "$HOME/.local/share/applications"
-    ZEN_URL=$(curl -fsSL "https://api.github.com/repos/zen-browser/desktop/releases/latest" \
-      | grep -o '"browser_download_url": "[^"]*linux[^"]*\.AppImage"' \
-      | head -1 | cut -d'"' -f4)
-    if [[ -n "$ZEN_URL" ]]; then
-      curl -fsSL "$ZEN_URL" -o "$ZEN_DIR/zen.AppImage"
-      chmod +x "$ZEN_DIR/zen.AppImage"
-      ln -sf "$ZEN_DIR/zen.AppImage" "$HOME/.local/bin/zen-browser"
-      cat > "$HOME/.local/share/applications/zen-browser.desktop" << 'DESKTOP'
+    log "Baixando $(basename "$ZEN_URL")..."
+    curl -fsSL --progress-bar "$ZEN_URL" -o "$ZEN_DIR/zen.AppImage"
+    chmod +x "$ZEN_DIR/zen.AppImage"
+    ln -sf "$ZEN_DIR/zen.AppImage" "$HOME/.local/bin/zen-browser"
+
+    # Tenta extrair ícone do AppImage
+    "$ZEN_DIR/zen.AppImage" --appimage-extract usr/share/icons &>/dev/null || true
+    if [[ -d squashfs-root/usr/share/icons ]]; then
+      cp -r squashfs-root/usr/share/icons ~/.local/share/ 2>/dev/null || true
+      rm -rf squashfs-root
+    fi
+
+    cat > "$HOME/.local/share/applications/zen-browser.desktop" << 'DESKTOP'
 [Desktop Entry]
 Name=Zen Browser
 Comment=Experience tranquillity while browsing the web
@@ -74,11 +78,9 @@ Type=Application
 Icon=zen-browser
 Categories=Network;WebBrowser;
 MimeType=text/html;text/xml;application/xhtml+xml;application/xml;application/vnd.mozilla.xul+xml;application/rss+xml;application/rdf+xml;image/gif;image/jpeg;image/png;x-scheme-handler/http;x-scheme-handler/https;x-scheme-handler/ftp;
+StartupNotify=true
 DESKTOP
-      ok "Zen Browser instalado como AppImage!"
-    else
-      warn "Não foi possível determinar a URL — acesse: https://zen-browser.app/download"
-    fi
+    ok "Zen Browser instalado!"
   fi
 fi
 
