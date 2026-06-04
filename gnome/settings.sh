@@ -11,11 +11,11 @@ gnome-extensions enable user-theme@gnome-shell-extensions.gcampax.github.com 2>/
 
 log "Aplicando tema escuro..."
 g org.gnome.desktop.interface color-scheme      'prefer-dark'
-g org.gnome.desktop.interface gtk-theme         'Kanagawa'
+g org.gnome.desktop.interface gtk-theme         'Nordic'
 g org.gnome.desktop.interface icon-theme        'Papirus-Dark'
 g org.gnome.desktop.interface cursor-theme      'Bibata-Modern-Ice'
-g org.gnome.desktop.wm.preferences theme        'Kanagawa'
-g org.gnome.shell.extensions.user-theme name    'Kanagawa'
+g org.gnome.desktop.wm.preferences theme        'Nordic'
+g org.gnome.shell.extensions.user-theme name    'Nordic'
 
 log "Aplicando fontes..."
 g org.gnome.desktop.interface font-name              'Inter 11'

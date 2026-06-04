@@ -21,21 +21,16 @@ else
   ok "Papirus instalado!"
 fi
 
-# ── Kanagawa GTK theme ───────────────────────────────────────────────
-# Usa ArcaEge/GTK-Kanagawa-Improved — pré-compilado, sem necessidade de sassc
-if [[ -f "$THEMES_DIR/Kanagawa/index.theme" ]]; then
-  skipped "Kanagawa GTK theme"
+# ── Nordic GTK theme ─────────────────────────────────────────────────
+if [[ -f "$THEMES_DIR/Nordic/index.theme" ]]; then
+  skipped "Nordic GTK theme"
 else
-  log "Instalando Kanagawa GTK theme (pré-compilado)..."
-  TMP=$(mktemp -d)
-  if git clone --depth=1 "https://github.com/ArcaEge/GTK-Kanagawa-Improved.git" "$TMP/kanagawa" 2>/dev/null; then
-    mkdir -p "$THEMES_DIR/Kanagawa"
-    cp -r "$TMP/kanagawa/"* "$THEMES_DIR/Kanagawa/"
-    ok "Kanagawa GTK instalado em $THEMES_DIR/Kanagawa"
+  log "Instalando Nordic GTK theme..."
+  if git clone --depth=1 "https://github.com/EliverLara/Nordic.git" "$THEMES_DIR/Nordic" 2>/dev/null; then
+    ok "Nordic GTK instalado em $THEMES_DIR/Nordic"
   else
-    warn "Não foi possível clonar o tema Kanagawa"
+    warn "Não foi possível clonar o tema Nordic"
   fi
-  rm -rf "$TMP"
 fi
 
 # ── Cursor: Bibata Modern Ice ────────────────────────────────────────

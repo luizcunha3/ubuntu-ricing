@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<title>GNOME Theme Explorer</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, sans-serif;
+    background: #111115;
+    color: #e0e0e0;
+    min-height: 100vh;
+    padding: 2rem;
+  }
+  h1 { font-size: 1.6rem; font-weight: 800; margin-bottom: .3rem; }
+  .sub { color: #666; font-size: .9rem; margin-bottom: 2.5rem; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .card {
+    border-radius: 14px;
+    border: 2px solid transparent;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color .2s, transform .15s, box-shadow .2s;
+    background: #1a1a1f;
+  }
+  .card:hover  { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,.5); border-color: rgba(255,255,255,.15); }
+  .card.active { border-color: #7aa2f7; box-shadow: 0 0 0 3px rgba(122,162,247,.2); }
+
+  /* ── Mock window ── */
+  .mock {
+    padding: 1rem 1rem .5rem;
+    position: relative;
+  }
+  .window {
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0,0,0,.5);
+    font-size: 11px;
+    user-select: none;
+  }
+  .titlebar {
+    display: flex; align-items: center; gap: .5rem;
+    padding: 8px 10px;
+    font-size: 11px; font-weight: 600;
+  }
+  .dots { display: flex; gap: 5px; }
+  .dot  { width: 11px; height: 11px; border-radius: 50%; }
+  .title-text { flex: 1; text-align: center; opacity: .7; }
+  .title-icons { display: flex; gap: 6px; opacity: .5; font-size: 13px; }
+
+  .body { display: flex; height: 200px; }
+
+  .sidebar {
+    width: 140px; flex-shrink: 0;
+    padding: .5rem;
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .sidebar-section {
+    font-size: 9px; font-weight: 700; letter-spacing: .06em;
+    opacity: .45; padding: .3rem .4rem .1rem; text-transform: uppercase;
+  }
+  .sidebar-item {
+    display: flex; align-items: center; gap: .4rem;
+    padding: .35rem .5rem; border-radius: 6px;
+    font-size: 10px; cursor: default;
+  }
+  .sidebar-item.active { font-weight: 600; }
+  .sidebar-icon { font-size: 12px; }
+
+  .content {
+    flex: 1; padding: .6rem;
+    display: flex; flex-direction: column; gap: .4rem; overflow: hidden;
+  }
+  .toolbar {
+    display: flex; align-items: center; gap: .4rem;
+    padding: .3rem; border-radius: 6px; margin-bottom: .2rem;
+  }
+  .tb-btn {
+    padding: .2rem .55rem; border-radius: 5px;
+    font-size: 9px; font-weight: 600; cursor: default;
+  }
+  .searchbar {
+    flex: 1; height: 20px; border-radius: 5px;
+    font-size: 9px; padding: 0 .5rem; border: none; outline: none;
+    display: flex; align-items: center;
+  }
+  .files {
+    display: grid; grid-template-columns: repeat(4,1fr); gap: .4rem;
+  }
+  .file {
+    display: flex; flex-direction: column; align-items: center;
+    gap: .2rem; padding: .35rem .2rem; border-radius: 6px;
+    font-size: 8.5px; text-align: center; cursor: default;
+  }
+  .file-icon { font-size: 20px; }
+  .file.selected { outline: 2px solid currentColor; }
+
+  .statusbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 4px 8px; font-size: 9px; opacity: .6; border-top: 1px solid rgba(255,255,255,.05);
+  }
+
+  /* ── Info panel ── */
+  .info { padding: 1rem 1.1rem 1.1rem; }
+  .theme-name {
+    font-size: 1rem; font-weight: 800; margin-bottom: .2rem;
+    display: flex; align-items: center; gap: .5rem;
+  }
+  .badge {
+    font-size: .65rem; font-weight: 700; padding: .15rem .45rem;
+    border-radius: 99px; letter-spacing: .03em;
+  }
+  .desc { font-size: .8rem; color: #888; line-height: 1.5; margin-bottom: .7rem; }
+  .tags { display: flex; flex-wrap: wrap; gap: .35rem; }
+  .tag {
+    font-size: .72rem; padding: .2rem .55rem; border-radius: 99px;
+    background: rgba(255,255,255,.07); color: #aaa;
+  }
+  .install-cmd {
+    margin-top: .8rem; background: #0d0d0f;
+    border-radius: 7px; padding: .5rem .75rem;
+    font-family: monospace; font-size: .75rem; color: #7aa2f7;
+    display: flex; align-items: center; justify-content: space-between; gap: .5rem;
+    cursor: pointer;
+  }
+  .install-cmd:hover { background: #14141a; }
+  .copy-hint { font-size: .65rem; color: #555; white-space: nowrap; }
+  .copy-hint.copied { color: #9ece6a; }
+
+  /* ── Detail panel ── */
+  #detail {
+    margin-top: 2rem; display: none;
+    background: #1a1a1f; border-radius: 14px; padding: 1.5rem 2rem;
+    border: 1px solid rgba(255,255,255,.08);
+  }
+  #detail h2 { font-size: 1.1rem; margin-bottom: 1rem; }
+  .install-steps { display: flex; flex-direction: column; gap: .5rem; }
+  .step {
+    display: flex; gap: .8rem; align-items: flex-start;
+  }
+  .step-num {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: #7aa2f7; color: #111; font-size: .7rem; font-weight: 800;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .step-cmd {
+    background: #0d0d0f; border-radius: 7px; padding: .4rem .7rem;
+    font-family: monospace; font-size: .78rem; color: #e0e0e0;
+    flex: 1; cursor: pointer;
+  }
+  .step-cmd:hover { background: #14141a; }
+  .step-label { font-size: .8rem; color: #888; margin-bottom: .3rem; }
+</style>
+</head>
+<body>
+
+<h1>🎨 GNOME Theme Explorer</h1>
+<p class="sub">Veja como cada tema ficaria no seu desktop antes de instalar. Clique no comando para copiar.</p>
+
+<div class="grid" id="grid"></div>
+<div id="detail"></div>
+
+<script>
+const themes = [
+  {
+    id: 'kanagawa',
+    name: 'Kanagawa',
+    badge: 'Atual',
+    badgeColor: '#7aa2f7',
+    desc: 'Inspirado na arte japonesa. Tons de índigo profundo — o tema atual. Muito escuro para alguns monitores.',
+    tags: ['escuro', 'japonês', 'índigo', 'pré-compilado'],
+    win:   '#1F1F28', titlebar: '#16161D', sidebar: '#16161D',
+    accent: '#7E9CD8', text: '#DCD7BA', sidebarActive: '#2A2A37',
+    toolbar: '#2A2A37', file: '#2A2A37', statusbar: '#16161D',
+    dot1: '#ff5f57', dot2: '#ffbd2e', dot3: '#28c840',
+    repo: 'ArcaEge/GTK-Kanagawa-Improved',
+    install: [
+      { label: 'Clonar tema', cmd: 'git clone --depth=1 https://github.com/ArcaEge/GTK-Kanagawa-Improved.git ~/.themes/Kanagawa' },
+      { label: 'Aplicar', cmd: 'gsettings set org.gnome.desktop.interface gtk-theme Kanagawa' },
+    ]
+  },
+  {
+    id: 'orchis',
+    name: 'Orchis Dark',
+    badge: 'Recomendado',
+    badgeColor: '#9ece6a',
+    desc: 'Um dos temas GNOME mais populares. Escuro elegante com ótimo contraste. Paleta neutra que funciona com qualquer wallpaper.',
+    tags: ['escuro', 'alto contraste', 'muito popular', 'GTK3+4'],
+    win:   '#383838', titlebar: '#2E2E2E', sidebar: '#2B2B2B',
+    accent: '#4DB6AC', text: '#EEEEEE', sidebarActive: '#404040',
+    toolbar: '#3A3A3A', file: '#404040', statusbar: '#2E2E2E',
+    dot1: '#ff5f57', dot2: '#ffbd2e', dot3: '#28c840',
+    repo: 'vinceliuice/Orchis-theme',
+    install: [
+      { label: 'Clonar e instalar', cmd: 'git clone --depth=1 https://github.com/vinceliuice/Orchis-theme.git /tmp/orchis && bash /tmp/orchis/install.sh -t teal -c dark' },
+      { label: 'Aplicar', cmd: 'gsettings set org.gnome.desktop.interface gtk-theme Orchis-Dark-Teal' },
+    ]
+  },
+  {
+    id: 'colloid',
+    name: 'Colloid Dark',
+    badge: 'Material',
+    badgeColor: '#7dcfff',
+    desc: 'Material Design moderno. Superfícies bem definidas, muito contraste entre elementos. Parece com a nova UI do Android.',
+    tags: ['material design', 'moderno', 'contraste alto', 'GTK3+4'],
+    win:   '#1E1E2E', titlebar: '#12121C', sidebar: '#161622',
+    accent: '#89B4FA', text: '#CDD6F4', sidebarActive: '#313244',
+    toolbar: '#2A2A3F', file: '#313244', statusbar: '#12121C',
+    dot1: '#ff5f57', dot2: '#ffbd2e', dot3: '#28c840',
+    repo: 'vinceliuice/Colloid-gtk-theme',
+    install: [
+      { label: 'Clonar e instalar', cmd: 'git clone --depth=1 https://github.com/vinceliuice/Colloid-gtk-theme.git /tmp/colloid && bash /tmp/colloid/install.sh' },
+      { label: 'Aplicar', cmd: 'gsettings set org.gnome.desktop.interface gtk-theme Colloid-Dark' },
+    ]
+  },
+  {
+    id: 'adwaita',
+    name: 'Adwaita Dark',
+    badge: 'Padrão GNOME',
+    badgeColor: '#e0af68',
+    desc: 'Tema padrão do GNOME puro. Cinza neutro com azul. Sem frescura — funciona perfeitamente em tudo, zero bugs.',
+    tags: ['padrão', 'sem bugs', 'neutro', 'sempre funciona'],
+    win:   '#303030', titlebar: '#242424', sidebar: '#242424',
+    accent: '#3584E4', text: '#FFFFFF', sidebarActive: '#3D3D3D',
+    toolbar: '#3A3A3A', file: '#3D3D3D', statusbar: '#242424',
+    dot1: '#ff5f57', dot2: '#ffbd2e', dot3: '#28c840',
+    repo: null,
+    install: [
+      { label: 'Aplicar (já vem no Ubuntu)', cmd: 'gsettings set org.gnome.desktop.interface gtk-theme Adwaita-dark' },
+    ]
+  },
+  {
+    id: 'catppuccin',
+    name: 'Catppuccin Mocha',
+    badge: '★ #1 2024',
+    badgeColor: '#cba6f7',
+    desc: 'O tema mais amado da internet. Roxo e pastel sobre fundo azul-escuro. Combina perfeitamente com o terminal Kanagawa.',
+    tags: ['pastel', 'roxo', 'huge comunidade', 'GTK3+4'],
+    win:   '#1E1E2E', titlebar: '#181825', sidebar: '#181825',
+    accent: '#CBA6F7', text: '#CDD6F4', sidebarActive: '#313244',
+    toolbar: '#2A2A3F', file: '#313244', statusbar: '#181825',
+    dot1: '#ff5f57', dot2: '#ffbd2e', dot3: '#28c840',
+    repo: 'catppuccin/gtk',
+    install: [
+      { label: 'Baixar tema', cmd: 'curl -L https://github.com/catppuccin/gtk/releases/latest/download/catppuccin-mocha-mauve-standard+default.zip -o /tmp/cat.zip && unzip -q /tmp/cat.zip -d ~/.themes/' },
+      { label: 'Aplicar', cmd: 'gsettings set org.gnome.desktop.interface gtk-theme catppuccin-mocha-mauve-standard+default' },
+    ]
+  },
+  {
+    id: 'nordic',
+    name: 'Nordic',
+    badge: 'Nord',
+    badgeColor: '#81a1c1',
+    desc: 'Baseado na paleta Nord. Cinzas azulados suaves com excelente legibilidade. Frio, clean e minimalista.',
+    tags: ['nord', 'azul frio', 'minimalista', 'suave'],
+    win:   '#2E3440', titlebar: '#252A33', sidebar: '#252A33',
+    accent: '#88C0D0', text: '#D8DEE9', sidebarActive: '#3B4252',
+    toolbar: '#353C49', file: '#3B4252', statusbar: '#252A33',
+    dot1: '#ff5f57', dot2: '#ffbd2e', dot3: '#28c840',
+    repo: 'EliverLara/Nordic',
+    install: [
+      { label: 'Clonar tema', cmd: 'git clone --depth=1 https://github.com/EliverLara/Nordic.git ~/.themes/Nordic' },
+      { label: 'Aplicar', cmd: 'gsettings set org.gnome.desktop.interface gtk-theme Nordic' },
+    ]
+  },
+  {
+    id: 'dracula',
+    name: 'Dracula',
+    badge: 'Clássico',
+    badgeColor: '#bd93f9',
+    desc: 'O tema escuro definitivo. Roxo vibrante sobre fundo cinza-azulado. Suporte em absolutamente tudo.',
+    tags: ['roxo', 'vibrante', 'clássico', 'suporte massivo'],
+    win:   '#282A36', titlebar: '#21222C', sidebar: '#21222C',
+    accent: '#BD93F9', text: '#F8F8F2', sidebarActive: '#44475A',
+    toolbar: '#383A59', file: '#44475A', statusbar: '#21222C',
+    dot1: '#ff5f57', dot2: '#ffbd2e', dot3: '#28c840',
+    repo: 'dracula/gtk',
+    install: [
+      { label: 'Clonar tema', cmd: 'git clone --depth=1 https://github.com/dracula/gtk.git ~/.themes/Dracula' },
+      { label: 'Aplicar', cmd: 'gsettings set org.gnome.desktop.interface gtk-theme Dracula' },
+    ]
+  },
+  {
+    id: 'gruvbox',
+    name: 'Gruvbox Dark',
+    badge: 'Retrô',
+    badgeColor: '#fabd2f',
+    desc: 'Tons terrosos e quentes. Visual vintage que cansa menos os olhos. Diferente de tudo — muito carismático.',
+    tags: ['quente', 'terroso', 'retrô', 'conforto visual'],
+    win:   '#282828', titlebar: '#1D2021', sidebar: '#1D2021',
+    accent: '#D79921', text: '#EBDBB2', sidebarActive: '#3C3836',
+    toolbar: '#32302F', file: '#3C3836', statusbar: '#1D2021',
+    dot1: '#CC241D', dot2: '#D79921', dot3: '#98971A',
+    repo: 'Fausto-Korpsvart/Gruvbox-GTK-Theme',
+    install: [
+      { label: 'Clonar e instalar', cmd: 'git clone --depth=1 https://github.com/Fausto-Korpsvart/Gruvbox-GTK-Theme.git /tmp/gruvbox && cp -r /tmp/gruvbox/themes/Gruvbox-Dark-BL ~/.themes/' },
+      { label: 'Aplicar', cmd: 'gsettings set org.gnome.desktop.interface gtk-theme Gruvbox-Dark-BL' },
+    ]
+  },
+];
+
+const sidebarItems = [
+  { icon: '⭐', label: 'Starred' },
+  { icon: '🕐', label: 'Recent' },
+  { icon: '🏠', label: 'Home', active: true },
+  { icon: '🖥️', label: 'Desktop' },
+  { icon: '📄', label: 'Documents' },
+  { icon: '⬇️', label: 'Downloads' },
+];
+const files = [
+  { icon: '📁', name: 'projects', sel: false },
+  { icon: '📁', name: 'ricing', sel: true },
+  { icon: '📄', name: 'install.sh', sel: false },
+  { icon: '🖼️', name: 'wallpaper.jpg', sel: false },
+  { icon: '📄', name: '.zshrc', sel: false },
+  { icon: '📁', name: 'dotfiles', sel: false },
+  { icon: '📄', name: 'starship.toml', sel: false },
+  { icon: '📁', name: 'dev', sel: false },
+];
+
+function buildWindow(t) {
+  const si = sidebarItems.map(item => `
+    <div class="sidebar-item ${item.active ? 'active' : ''}"
+         style="${item.active
+           ? `background:${t.sidebarActive};color:${t.accent}`
+           : `color:${t.text}88`}">
+      <span class="sidebar-icon">${item.icon}</span>
+      ${item.label}
+    </div>`).join('');
+
+  const fi = files.map(f => `
+    <div class="file ${f.sel ? 'selected' : ''}"
+         style="background:${f.sel ? t.sidebarActive : 'transparent'};
+                color:${f.sel ? t.accent : t.text + 'cc'};
+                outline-color:${t.accent}">
+      <span class="file-icon">${f.icon}</span>
+      ${f.name}
+    </div>`).join('');
+
+  return `
+  <div class="window">
+    <div class="titlebar" style="background:${t.titlebar};color:${t.text}">
+      <div class="dots">
+        <div class="dot" style="background:${t.dot1}"></div>
+        <div class="dot" style="background:${t.dot2}"></div>
+        <div class="dot" style="background:${t.dot3}"></div>
+      </div>
+      <span class="title-text" style="color:${t.text}88">Files — Home</span>
+      <div class="title-icons">⊞ ⊡ ✕</div>
+    </div>
+    <div class="body">
+      <div class="sidebar" style="background:${t.sidebar};border-right:1px solid ${t.text}0a">
+        <div class="sidebar-section" style="color:${t.text}">Favorites</div>
+        ${si}
+        <div class="sidebar-section" style="color:${t.text};margin-top:.4rem">Devices</div>
+        <div class="sidebar-item" style="color:${t.text}55">
+          <span class="sidebar-icon">💽</span> Drive
+        </div>
+      </div>
+      <div class="content" style="background:${t.win}">
+        <div class="toolbar" style="background:${t.toolbar}">
+          <div class="tb-btn" style="background:${t.sidebarActive};color:${t.text}99">←</div>
+          <div class="tb-btn" style="background:${t.sidebarActive};color:${t.text}99">→</div>
+          <div class="searchbar" style="background:${t.sidebarActive};color:${t.text}88">
+            🔍 Search files…
+          </div>
+          <div class="tb-btn" style="background:${t.accent};color:#111;font-weight:800">≡</div>
+        </div>
+        <div class="files">${fi}</div>
+        <div class="statusbar" style="color:${t.text}">
+          <span>8 items</span>
+          <span style="color:${t.accent}">${t.name}</span>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+const grid = document.getElementById('grid');
+const detail = document.getElementById('detail');
+let active = null;
+
+themes.forEach(t => {
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.dataset.id = t.id;
+
+  const installLine = t.install[t.install.length - 1].cmd;
+
+  card.innerHTML = `
+    <div class="mock" style="background:${t.titlebar}22">${buildWindow(t)}</div>
+    <div class="info">
+      <div class="theme-name">
+        ${t.name}
+        <span class="badge" style="background:${t.badgeColor}22;color:${t.badgeColor}">${t.badge}</span>
+      </div>
+      <p class="desc">${t.desc}</p>
+      <div class="tags">${t.tags.map(tg => `<span class="tag">${tg}</span>`).join('')}</div>
+      <div class="install-cmd" onclick="copyCmd(this, event)" data-cmd="${installLine}">
+        <span>$ ${installLine.length > 55 ? installLine.slice(0,55)+'…' : installLine}</span>
+        <span class="copy-hint">clique para copiar</span>
+      </div>
+    </div>`;
+
+  card.addEventListener('click', () => selectTheme(t, card));
+  grid.appendChild(card);
+});
+
+function selectTheme(t, card) {
+  document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+  card.classList.add('active');
+  active = t.id;
+
+  const steps = t.install.map((s, i) => `
+    <div class="step">
+      <div class="step-num">${i+1}</div>
+      <div>
+        <div class="step-label">${s.label}</div>
+        <div class="step-cmd" onclick="copyCmd(this, event)" data-cmd="${s.cmd}">
+          ${s.cmd}
+          <span style="float:right;font-size:.65rem;color:#555;margin-left:.5rem">copiar</span>
+        </div>
+      </div>
+    </div>`).join('');
+
+  detail.style.display = 'block';
+  detail.innerHTML = `
+    <h2>Como instalar: <span style="color:${t.badgeColor}">${t.name}</span></h2>
+    <div class="install-steps">${steps}</div>
+    ${t.repo ? `<p style="margin-top:1rem;font-size:.78rem;color:#555">Repositório: github.com/${t.repo}</p>` : ''}
+    <p style="margin-top:.5rem;font-size:.78rem;color:#555">Depois de aplicar o gsettings, faça <code style="color:#7aa2f7">Alt+F2 → r → Enter</code> para recarregar o gnome-shell.</p>`;
+
+  detail.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function copyCmd(el, e) {
+  e.stopPropagation();
+  const cmd = el.dataset.cmd;
+  navigator.clipboard.writeText(cmd).catch(() => {});
+  const hint = el.querySelector('.copy-hint') || el;
+  const orig = hint.textContent;
+  hint.textContent = '✓ copiado!';
+  hint.classList.add('copied');
+  setTimeout(() => { hint.textContent = orig; hint.classList.remove('copied'); }, 2000);
+}
+</script>
+</body>
+</html>
