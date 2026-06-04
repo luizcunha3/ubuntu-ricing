@@ -9,7 +9,11 @@ FONTS_DIR="$HOME/.local/share/fonts"
 mkdir -p "$FONTS_DIR"
 
 # ── JetBrains Mono Nerd Font ────────────────────────────────────────
-if fc-list | grep -qi "JetBrainsMono Nerd Font"; then
+jetbrains_installed() {
+  ls "$FONTS_DIR"/JetBrainsMonoNerd* &>/dev/null || \
+  ls "$FONTS_DIR"/JetBrainsMonoNLNerd* &>/dev/null
+}
+if jetbrains_installed; then
   skipped "JetBrains Mono Nerd Font"
 else
   FONT_VERSION="3.2.1"
@@ -26,7 +30,12 @@ else
 fi
 
 # ── Inter (UI do GNOME) ─────────────────────────────────────────────
-if fc-list | grep -qi "^.*Inter"; then
+inter_installed() {
+  ls "$FONTS_DIR"/Inter* &>/dev/null || \
+  ls /usr/share/fonts/truetype/inter* &>/dev/null || \
+  dpkg -l fonts-inter &>/dev/null 2>&1
+}
+if inter_installed; then
   skipped "Inter"
 else
   log "Instalando fonte Inter..."
