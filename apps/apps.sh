@@ -63,14 +63,36 @@ else
   }
 fi
 
+# Registra o kitty no menu de apps do GNOME (o installer.sh não faz isso):
+# copia os .desktop e troca Exec/Icon por caminhos absolutos do ~/.local/kitty.app.
+kitty_desktop_integration() {
+  local apps="$HOME/.local/share/applications"
+  local src="$HOME/.local/kitty.app/share/applications"
+  [[ -d "$src" ]] || return 0
+  mkdir -p "$apps"
+  cp "$src/kitty.desktop"      "$apps/" 2>/dev/null || true
+  cp "$src/kitty-open.desktop" "$apps/" 2>/dev/null || true
+  sed -i "s|Icon=kitty|Icon=$HOME/.local/kitty.app/share/icons/hicolor/256x256/apps/kitty.png|g" "$apps"/kitty*.desktop 2>/dev/null || true
+  sed -i "s|Exec=kitty|Exec=$HOME/.local/kitty.app/bin/kitty|g"                                   "$apps"/kitty*.desktop 2>/dev/null || true
+  update-desktop-database "$apps" 2>/dev/null || true
+}
+
 # ── Kitty ─────────────────────────────────────────────────────────────
-if command -v kitty &>/dev/null; then
+if command -v kitty &>/dev/null || [[ -f "$HOME/.local/kitty.app/bin/kitty" ]]; then
   skipped "Kitty"
 else
   log "Instalando Kitty..."
-  curl -fsSL https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin launch=n \
-    && ok "Kitty instalado!" || warn "Falhou ao instalar Kitty"
+  if curl -fsSL https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin launch=n; then
+    mkdir -p "$HOME/.local/bin"
+    ln -sf "$HOME/.local/kitty.app/bin/kitty"  "$HOME/.local/bin/kitty"
+    ln -sf "$HOME/.local/kitty.app/bin/kitten" "$HOME/.local/bin/kitten"
+    ok "Kitty instalado!"
+  else
+    warn "Falhou ao instalar Kitty"
+  fi
 fi
+# Roda sempre (idempotente): garante o atalho no menu mesmo se o kitty já existia.
+kitty_desktop_integration
 
 # ── Claude Code ───────────────────────────────────────────────────────
 if command -v claude &>/dev/null; then

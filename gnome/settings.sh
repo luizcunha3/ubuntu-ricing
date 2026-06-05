@@ -32,16 +32,12 @@ g org.gnome.desktop.interface enable-animations      true
 g org.gnome.desktop.interface show-battery-percentage true
 g org.gnome.desktop.interface clock-show-weekday     true
 g org.gnome.desktop.interface clock-show-seconds     false
+g org.gnome.settings-daemon.plugins.color night-light-enabled false
 
 log "Configurando touchpad..."
 g org.gnome.desktop.peripherals.touchpad tap-to-click  true
 g org.gnome.desktop.peripherals.touchpad natural-scroll true
 g org.gnome.desktop.peripherals.touchpad speed          0.3
-
-log "Ativando Night Light..."
-g org.gnome.settings-daemon.plugins.color night-light-enabled     true
-g org.gnome.settings-daemon.plugins.color night-light-temperature 4000
-g org.gnome.settings-daemon.plugins.color night-light-schedule-automatic true
 
 log "Configurando Dash to Dock..."
 g org.gnome.shell.extensions.dash-to-dock dock-position    'BOTTOM'
@@ -74,6 +70,24 @@ if command -v kitty &>/dev/null; then
   g org.gnome.desktop.default-applications.terminal exec       'kitty'
   g org.gnome.desktop.default-applications.terminal exec-arg   ''
   ok "Kitty definido como terminal padrão!"
+
+  log "Criando atalho Super+T para abrir o kitty..."
+  KB="org.gnome.settings-daemon.plugins.media-keys"
+  KB_PATH="/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/kitty/"
+  # Adiciona o caminho à lista de custom-keybindings sem duplicar
+  CURRENT="$(gsettings get "$KB" custom-keybindings 2>/dev/null || echo '@as []')"
+  if [[ "$CURRENT" != *"$KB_PATH"* ]]; then
+    if [[ "$CURRENT" == "@as []" || "$CURRENT" == "[]" ]]; then
+      NEW="['$KB_PATH']"
+    else
+      NEW="${CURRENT%]}, '$KB_PATH']"
+    fi
+    g "$KB" custom-keybindings "$NEW"
+  fi
+  g "$KB.custom-keybinding:$KB_PATH" name    'Kitty'
+  g "$KB.custom-keybinding:$KB_PATH" command "$KITTY_BIN"
+  g "$KB.custom-keybinding:$KB_PATH" binding '<Super>t'
+  ok "Atalho Super+T → kitty configurado!"
 else
   warn "Kitty não encontrado — terminal padrão não alterado."
 fi
